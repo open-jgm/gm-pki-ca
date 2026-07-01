@@ -1,0 +1,34 @@
+server:
+  port: 8888
+
+spring:
+  application:
+    name: gm-pki-ca
+  # T08: 允许较大的 multipart 上传以接收 P12 文件
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+# ── 证书模块配置 ─────────────────────────────────────────────────────
+# 敏感值（如 CA 私钥）生产环境通过环境变量覆盖，例如：
+#   CERT_P12_PASSWORD=MyStr0ngPassword
+cert:
+  # P12 口令（生产环境务必通过环境变量 CERT_P12_PASSWORD 覆盖）
+  p12-password: ${CERT_P12_PASSWORD:12345678}
+  # 已签发证书 LRU 缓存条目上限
+  cache-max-size: ${CERT_CACHE_MAX_SIZE:100}
+  # 已签发证书 LRU 缓存 TTL（分钟）
+  cache-ttl-minutes: ${CERT_CACHE_TTL_MINUTES:10}
+  # CSR 路径下服务端生成 SM2 加密证书的有效月数
+  csr-enc-cert-valid-months: ${CERT_CSR_ENC_CERT_VALID_MONTHS:24}
+  # T09: 自建 CA 持久化目录（仅 CA 元数据；生产环境应严格收紧目录权限到运行用户）
+  ca-storage-dir: ${CERT_CA_STORAGE_DIR:./data/ca}
+  # T11: 管理端 token；空值时拒绝全部 /api/v2/ca/** 请求（默认安全）
+  admin-token: ${CERT_ADMIN_TOKEN:}
+
+logging:
+  level:
+    com.open.gm.jca: INFO
+  file:
+    path: /opt/gm-pki-ca/logs

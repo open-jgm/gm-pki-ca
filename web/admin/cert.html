@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>cert signed Page</title>
+    <!-- 样 式 文 件 -->
+    <link rel="stylesheet" href="component/pear/css/pear.css"/>
+    <link rel="stylesheet" href="admin/css/other/cert.css"/>
+    <style>
+        .ext-panel { background:#f7f8fa; border:1px dashed #c9d1d9; padding:12px 16px; margin:12px 0; border-radius:4px; }
+        .ext-panel .ext-title { font-weight:600; color:#3f4a5c; margin-bottom:8px; }
+        .chk-inline { display:inline-block; margin-right:14px; }
+        .preview-box { background:#f7f8fa; border:1px solid #e0e4ea; padding:12px 16px; margin:12px 0; border-radius:4px; white-space:pre-wrap; word-break:break-all; max-height:300px; overflow:auto; font-family: Menlo, Consolas, monospace; font-size:12px; }
+    </style>
+</head>
+<!-- 代 码 结 构 -->
+<body>
+<div class="layui-card">
+    <div class="layui-card-body" style="background-image: url('admin/images/background.svg'); background-size: cover;">
+        <div class="layui-tab layui-tab-card" lay-filter="test">
+            <ul class="layui-tab-title">
+                <li class="layui-this">统一签发(T04)</li>
+                <li>SM2直接生成P12</li>
+                <li>SM2提交请求P10(文件)</li>
+                <li>SM2提交请求P10(文本)</li>
+                <li>RSA直接生成P12</li>
+                <li>RSA提交P10(文本)</li>
+                <li>ECC直接生成P12</li>
+                <li>ECC提交P10(文本)</li>
+                <li>CSR解析(T05)</li>
+                <li>CSR两步签发(T06)</li>
+                <li>ASN.1数据解析</li>
+            </ul>
+            <label class="layui-form-label-col" STYLE="width: 50%">
+                <a style="color: #45b85e" href="/api/v2/cert/download-rsa-ca" class="lazyui-btn">下载RSA根证书👉点击下载</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a style="color: #4776c8" href="/api/v2/cert/download-sm2-ca" class="lazyui-btn">下载SM2根证书👉点击下载</a>
+                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <a style="color: #e6a817" href="/api/v2/cert/download-ecc-ca/prime256v1" class="lazyui-btn">ECC根(P256)</a>
+                &nbsp;&nbsp;
+                <a style="color: #e6a817" href="/api/v2/cert/download-ecc-ca/brainpoolP256r1" class="lazyui-btn">ECC根(BP256)</a>
+                &nbsp;&nbsp;
+                <a style="color: #e6a817" href="/api/v2/cert/download-ecc-ca/FRP256v1" class="lazyui-btn">ECC根(FRP256)</a>
+            </label>
+            <div class="layui-tab-content">
+
+                <!-- ────────────── T04: 统一签发 ────────────── -->
+                <div class="layui-tab-item layui-show">
+                    <form class="layui-form" id="unified-issue-form" lay-filter="unified-issue" action="javascript:void(0);">
+                        <div class="layui-form-item">
+                            <img class="logo" src="admin/images/logo.png"/>
+                            <div class="title">Unified Certificate Issue (v2)</div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">算法:</label>
+                            <div class="layui-input-block">
+                                <select name="algorithm" lay-filter="unifiedAlgo">
+                                    <option value="SM2" selected>SM2</option>
+                                    <option value="RSA">RSA</option>
+                                    <option value="ECC">ECC</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item" id="unified-curve-row" style="display:none">
+                            <label class="layui-form-label">ECC曲线:</label>
+                            <div class="layui-input-block">
+                                <select name="curve">
+                                    <option value="prime256v1" selected>prime256v1</option>
+                                    <option value="brainpoolP256r1">brainpoolP256r1</option>
+                                    <option value="FRP256v1">FRP256v1</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">证书用途:</label>
+                            <div class="layui-input-block">
+                                <select name="certUsage">
+                                    <option value="">默认(SM2=BOTH, RSA/ECC=SIGN)</option>
+                                    <option value="SIGN">SIGN 签名</option>
+                                    <option value="ENC">ENC 加密 (仅SM2)</option>
+                                    <option value="BOTH">BOTH 双证书 (仅SM2)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">签名算法:</label>
+                            <div class="layui-input-block">
+                                <input placeholder="可选，例:SHA256withRSA / SM3withSM2 / SHA256withECDSA" name="signatureAlg" class="layui-input"/>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">摘要算法:</label>
+                            <div class="layui-input-block">
+                                <input placeholder="可选，例:SHA-256 / SM3" name="digestAlg" class="layui-input"/>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">输出格式:</label>
+                            <div class="layui-input-block">
+                                <input type="checkbox" name="of_pem" title="PEM" checked>
+                                <input type="checkbox" name="of_der" title="DER" checked>
+                                <input type="checkbox" name="of_p12" title="P12" checked>
+                                <input type="checkbox" name="of_jks" title="JKS (RSA/ECC支持)">
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">生效月数:</label>
+                            <div class="layui-input-block">
+                                <input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">国家:</label>
+                            <div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">省市:</label>
+                            <div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">市县:</label>
+                            <div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">单位:</label>
+                            <div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">部门:</label>
+                            <div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">名称(CN):</label>
+                            <div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">邮箱:</label>
+                            <div class="layui-input-block"><input name="dn_email" class="layui-input"/></div>
+                        </div>
+
+                        <!-- T02 扩展（可选） -->
+                        <div class="ext-panel">
+                            <div class="ext-title">X.509 扩展（T02，可选）</div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">KeyUsage:</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="ku_digitalSignature" title="digitalSignature">
+                                    <input type="checkbox" name="ku_nonRepudiation" title="nonRepudiation">
+                                    <input type="checkbox" name="ku_keyEncipherment" title="keyEncipherment">
+                                    <input type="checkbox" name="ku_dataEncipherment" title="dataEncipherment">
+                                    <input type="checkbox" name="ku_keyAgreement" title="keyAgreement">
+                                    <input type="checkbox" name="ku_keyCertSign" title="keyCertSign">
+                                    <input type="checkbox" name="ku_cRLSign" title="cRLSign">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">ExtKeyUsage:</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="eku_serverAuth" title="serverAuth">
+                                    <input type="checkbox" name="eku_clientAuth" title="clientAuth">
+                                    <input type="checkbox" name="eku_codeSigning" title="codeSigning">
+                                    <input type="checkbox" name="eku_emailProtection" title="emailProtection">
+                                    <input type="checkbox" name="eku_timeStamping" title="timeStamping">
+                                    <input type="checkbox" name="eku_ocspSigning" title="OCSPSigning">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">SAN:</label>
+                                <div class="layui-input-block">
+                                    <input name="sans" placeholder="格式: DNS:example.com,IP:1.2.3.4,EMAIL:a@b.com (逗号分隔)" class="layui-input"/>
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">BasicCA:</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="basicConstraintsCA" title="设为CA证书">
+                                </div>
+                            </div>
+                        </div>
+
+                        <label class="layui-form-label-col" style="color: #ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item">
+                            <button type="button" id="unifiedBtn" class="pear-btn pear-btn-success" lay-submit lay-filter="unifiedSubmit">提 交</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ────────────── SM2 直接 P12 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="sm2-signing-table" lay-filter="sm2-signing" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">SM2 Certificate Issue</div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">生效月数:</label><div class="layui-input-block"><input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">国家:</label><div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">地址:</label><div class="layui-input-block"><input name="dn_street" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">单位:</label><div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">部门:</label><div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">名称:</label><div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">邮箱:</label><div class="layui-input-block"><input name="dn_email" class="layui-input"/></div></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" id="sm2Button" class="pear-btn pear-btn-success" lay-submit lay-filter="sm2Submit">提 交</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── SM2 P10 文件 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="csr-file-table" lay-filter="csr-file-signing" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">SM2 P10 File Issue</div></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" class="layui-btn" id="upload1"><i class="layui-icon"></i>上传 P10 文件</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── SM2 P10 文本 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="csr-content-table" lay-filter="csr-content-signing" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">SM2 P10 String Issue</div></div>
+                        <div class="layui-form-item"><textarea name="p10PemStr" placeholder="请输入 p10.pem 文件内容" class="layui-textarea" style="width:100%;height:555px"></textarea></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" id="csrContentButton" class="pear-btn pear-btn-success login" lay-submit lay-filter="csrContentButton">提 交</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── RSA 直接 P12 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="rsa-signing-table" lay-filter="rsa-signing" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">RSA Certificate Issue</div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">生效月数:</label><div class="layui-input-block"><input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">国家:</label><div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">单位:</label><div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">部门:</label><div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">名称:</label><div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">邮箱:</label><div class="layui-input-block"><input name="dn_email" class="layui-input"/></div></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" id="rsaButton" class="pear-btn pear-btn-success" lay-submit lay-filter="rsaSubmit">提 交</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── RSA P10 文本 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="rsa-p10-text-table" lay-filter="rsa-p10-text" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">RSA P10 String Issue</div></div>
+                        <div class="layui-form-item"><textarea name="p10PemStr" placeholder="请输入 p10.pem 文件内容" class="layui-textarea" style="width:100%;height:555px"></textarea></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" id="rsaP10TextButton" class="pear-btn pear-btn-success login" lay-submit lay-filter="rsaP10TextButton">提 交</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── ECC 直接 P12 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="ecc-signing-table" lay-filter="ecc-signing" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">ECC Certificate Issue</div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">曲线:</label><div class="layui-input-block"><select name="eccCurve"><option value="prime256v1" selected>prime256v1</option><option value="brainpoolP256r1">brainpoolP256r1</option><option value="FRP256v1">FRP256v1</option></select></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">生效月数:</label><div class="layui-input-block"><input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">国家:</label><div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">单位:</label><div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">部门:</label><div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">名称:</label><div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">邮箱:</label><div class="layui-input-block"><input name="dn_email" class="layui-input"/></div></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" id="eccButton" class="pear-btn pear-btn-success" lay-submit lay-filter="eccSubmit">提 交</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── ECC P10 文本 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="ecc-p10-text-table" lay-filter="ecc-p10-text" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">ECC P10 String Issue</div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">曲线:</label><div class="layui-input-block"><select name="eccCurve"><option value="prime256v1" selected>prime256v1</option><option value="brainpoolP256r1">brainpoolP256r1</option><option value="FRP256v1">FRP256v1</option></select></div></div>
+                        <div class="layui-form-item"><textarea name="p10PemStr" placeholder="请输入 p10.pem 文件内容" class="layui-textarea" style="width:100%;height:555px"></textarea></div>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <div class="layui-form-item"><button type="button" id="eccP10TextButton" class="pear-btn pear-btn-success login" lay-submit lay-filter="eccP10TextButton">提 交</button></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── T05: CSR 解析 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="csr-parse-form" lay-filter="csr-parse" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">CSR Parse (T05)</div></div>
+                        <div class="layui-form-item"><textarea id="csrParseInput" placeholder="粘贴 PKCS#10 CSR (PEM 或 base64 DER)" class="layui-textarea" style="width:100%;height:300px"></textarea></div>
+                        <div class="layui-form-item">
+                            <button type="button" id="csrParseBtn" class="pear-btn pear-btn-primary">解 析</button>
+                        </div>
+                        <div id="csrParseResult" class="preview-box" style="display:none"></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── T06: CSR 两步签发 ────────────── -->
+                <div class="layui-tab-item">
+                    <form class="layui-form" id="csr-sign-form" lay-filter="csr-sign" action="javascript:void(0);">
+                        <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">CSR Two-Step Sign (T06)</div></div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">CSR:</label>
+                            <div class="layui-input-block">
+                                <textarea id="csrSignInput" name="csrContent" placeholder="粘贴 PKCS#10 CSR" class="layui-textarea" style="height:240px"></textarea>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">算法:</label>
+                            <div class="layui-input-block">
+                                <select name="algorithm" lay-filter="csrSignAlgo">
+                                    <option value="">自动检测</option>
+                                    <option value="SM2">SM2</option>
+                                    <option value="RSA">RSA</option>
+                                    <option value="ECC">ECC</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item" id="csrSign-curve-row" style="display:none">
+                            <label class="layui-form-label">ECC曲线:</label>
+                            <div class="layui-input-block">
+                                <select name="curve"><option value="prime256v1" selected>prime256v1</option><option value="brainpoolP256r1">brainpoolP256r1</option><option value="FRP256v1">FRP256v1</option></select>
+                            </div>
+                        </div>
+                        <div class="layui-form-item">
+                            <label class="layui-form-label">有效月数:</label>
+                            <div class="layui-input-block"><input name="certValidMonth" placeholder="可选" class="layui-input"/></div>
+                        </div>
+
+                        <div class="ext-panel">
+                            <div class="ext-title">追加扩展（合并到 CSR）</div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">KeyUsage:</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="csku_digitalSignature" title="digitalSignature">
+                                    <input type="checkbox" name="csku_nonRepudiation" title="nonRepudiation">
+                                    <input type="checkbox" name="csku_keyEncipherment" title="keyEncipherment">
+                                    <input type="checkbox" name="csku_dataEncipherment" title="dataEncipherment">
+                                    <input type="checkbox" name="csku_keyAgreement" title="keyAgreement">
+                                    <input type="checkbox" name="csku_keyCertSign" title="keyCertSign">
+                                    <input type="checkbox" name="csku_cRLSign" title="cRLSign">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">ExtKeyUsage:</label>
+                                <div class="layui-input-block">
+                                    <input type="checkbox" name="cseku_serverAuth" title="serverAuth">
+                                    <input type="checkbox" name="cseku_clientAuth" title="clientAuth">
+                                    <input type="checkbox" name="cseku_codeSigning" title="codeSigning">
+                                    <input type="checkbox" name="cseku_emailProtection" title="emailProtection">
+                                    <input type="checkbox" name="cseku_timeStamping" title="timeStamping">
+                                    <input type="checkbox" name="cseku_ocspSigning" title="OCSPSigning">
+                                </div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">SAN:</label>
+                                <div class="layui-input-block"><input name="sans" placeholder="DNS:example.com,IP:1.2.3.4" class="layui-input"/></div>
+                            </div>
+                            <div class="layui-form-item">
+                                <label class="layui-form-label">BasicCA:</label>
+                                <div class="layui-input-block"><input type="checkbox" name="basicConstraintsCA" title="设为CA证书"></div>
+                            </div>
+                        </div>
+
+                        <div class="layui-form-item">
+                            <button type="button" id="csrPreviewBtn" class="pear-btn pear-btn-primary">预 览</button>
+                            <button type="button" id="csrSignBtn" class="pear-btn pear-btn-success">签 发</button>
+                        </div>
+                        <div id="csrPreviewBox" class="preview-box" style="display:none"></div>
+                    </form>
+                </div>
+
+                <!-- ────────────── ASN.1 ────────────── -->
+                <div class="layui-tab-item">
+                    <iframe src="asn1js/index.html" frameborder="1" id="log-frame" width="99%" style="height: calc(100vh - 70px);"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 资 源 引 入 -->
+<script src="component/layui/layui.js"></script>
+<script src="component/pear/pear.js"></script>
+<script>
+    layui.use(['form', 'button', 'popup', 'jquery', 'easyAdmin', 'yaml'], function () {
+        var form = layui.form;
+        var upload = layui.upload;
+        let $ = layui.jquery;
+        var yaml = layui.yaml;
+        let adminServerUrl = yaml.load("config/pear.config.yml").admin.server;
+        layui.data('easyAdmin', {key: 'serverUrl', value: adminServerUrl});
+        let easyAdmin = layui.easyAdmin;
+
+        // ── 工具函数 ─────────────────────────────────────
+        function downloadByHref(hrefURL) {
+            var a = document.createElement('a');
+            a.href = hrefURL; a.download = '';
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        }
+        function collectChecked(field, names) {
+            var arr = [];
+            names.forEach(function (n) { if (field[n]) arr.push(n.split('_').slice(1).join('_')); });
+            return arr;
+        }
+        function parseSans(str) {
+            if (!str) return [];
+            return str.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+        }
+        function buildOutputFormats(f) {
+            var arr = [];
+            if (f.of_pem) arr.push('PEM');
+            if (f.of_der) arr.push('DER');
+            if (f.of_p12) arr.push('P12');
+            if (f.of_jks) arr.push('JKS');
+            return arr;
+        }
+
+        // ── 算法切换：显示/隐藏曲线 ─────────────────────────
+        form.on('select(unifiedAlgo)', function (data) {
+            $('#unified-curve-row').toggle(data.value === 'ECC');
+        });
+        form.on('select(csrSignAlgo)', function (data) {
+            $('#csrSign-curve-row').toggle(data.value === 'ECC');
+        });
+
+        // ── T04: 统一签发 ───────────────────────────────
+        form.on('submit(unifiedSubmit)', function (data) {
+            var f = data.field;
+            var algo = f.algorithm || 'SM2';
+            var curve = f.curve || 'prime256v1';
+
+            var keyUsageFields = ['ku_digitalSignature','ku_nonRepudiation','ku_keyEncipherment','ku_dataEncipherment','ku_keyAgreement','ku_keyCertSign','ku_cRLSign'];
+            var ekuFields = ['eku_serverAuth','eku_clientAuth','eku_codeSigning','eku_emailProtection','eku_timeStamping','eku_ocspSigning'];
+
+            var payload = {
+                certValidMonth: f.certValidMonth ? parseInt(f.certValidMonth, 10) : null,
+                dn_c: f.dn_c, dn_st: f.dn_st, dn_l: f.dn_l, dn_o: f.dn_o, dn_ou: f.dn_ou, dn_cn: f.dn_cn, dn_email: f.dn_email,
+                algorithm: algo,
+                certUsage: f.certUsage || null,
+                signatureAlg: f.signatureAlg || null,
+                digestAlg: f.digestAlg || null,
+                outputFormats: buildOutputFormats(f),
+                keyUsages: collectChecked(f, keyUsageFields),
+                extendedKeyUsages: collectChecked(f, ekuFields),
+                subjectAltNames: parseSans(f.sans),
+                basicConstraintsCA: f.basicConstraintsCA ? true : null
+            };
+
+            var qs = 'algorithm=' + encodeURIComponent(algo);
+            if (algo === 'ECC') qs += '&curve=' + encodeURIComponent(curve);
+
+            easyAdmin.http({
+                url: '/api/v2/cert/issue?' + qs,
+                sendToken: false,
+                data: JSON.stringify(payload),
+                dataType: 'json',
+                contentType: 'application/json',
+                type: 'POST',
+                success: function (result) {
+                    if (result.success) {
+                        var cn = result.data;
+                        var path = '/api/v2/cert/download/' + algo + '/' + encodeURIComponent(cn);
+                        if (algo === 'ECC') path += '?curve=' + encodeURIComponent(curve);
+                        downloadByHref(path);
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 2000});
+                    }
+                }
+            });
+            return false;
+        });
+
+        // ── SM2 直接 ────────────────────────────────────
+        form.on('submit(sm2Submit)', function (data) {
+            easyAdmin.http({
+                url: '/api/v2/cert/cert-issue', sendToken: false,
+                data: JSON.stringify(data.field), dataType: 'json',
+                contentType: 'application/json', type: 'POST',
+                success: function (result) {
+                    if (result.success) downloadByHref('/api/v2/cert/download-cert/' + encodeURIComponent(data.field.dn_cn));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+            return false;
+        });
+
+        // ── SM2 P10 文件 ────────────────────────────────
+        upload.render({
+            elem: '#upload1', url: '/api/v2/cert/p10Upload', accept: 'file', data: {id: 1},
+            done: function (result) {
+                if (result.success) downloadByHref('/api/v2/cert/download-cert/' + encodeURIComponent(result.data));
+                else layer.msg(result.msg, {icon: 2, time: 2000});
+            },
+            error: function () { layer.msg('上传失败'); }
+        });
+
+        // ── SM2 P10 文本 ────────────────────────────────
+        form.on('submit(csrContentButton)', function (data) {
+            easyAdmin.http({
+                url: '/api/v2/cert/p10PemStr', sendToken: false,
+                data: JSON.stringify(data.field), dataType: 'json',
+                contentType: 'application/json', type: 'POST',
+                success: function (result) {
+                    if (result.success) downloadByHref('/api/v2/cert/download-cert/' + encodeURIComponent(result.data));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+            return false;
+        });
+
+        // ── RSA 直接 ────────────────────────────────────
+        form.on('submit(rsaSubmit)', function (data) {
+            easyAdmin.http({
+                url: '/api/v2/cert/rsa-cert-issue', sendToken: false,
+                data: JSON.stringify(data.field), dataType: 'json',
+                contentType: 'application/json', type: 'POST',
+                success: function (result) {
+                    if (result.success) downloadByHref('/api/v2/cert/download-rsa-cert/' + encodeURIComponent(data.field.dn_cn));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+            return false;
+        });
+
+        // ── RSA P10 文本 ────────────────────────────────
+        form.on('submit(rsaP10TextButton)', function (data) {
+            easyAdmin.http({
+                url: '/api/v2/cert/rsa-p10PemStr', sendToken: false,
+                data: JSON.stringify(data.field), dataType: 'json',
+                contentType: 'application/json', type: 'POST',
+                success: function (result) {
+                    if (result.success) downloadByHref('/api/v2/cert/download-rsa-cert/' + encodeURIComponent(result.data));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+            return false;
+        });
+
+        // ── ECC 直接 ────────────────────────────────────
+        form.on('submit(eccSubmit)', function (data) {
+            var curve = data.field.eccCurve || 'prime256v1';
+            easyAdmin.http({
+                url: '/api/v2/cert/ecc-cert-issue/' + curve, sendToken: false,
+                data: JSON.stringify(data.field), dataType: 'json',
+                contentType: 'application/json', type: 'POST',
+                success: function (result) {
+                    if (result.success) downloadByHref('/api/v2/cert/download-ecc-cert/' + curve + '/' + encodeURIComponent(data.field.dn_cn));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+            return false;
+        });
+
+        // ── ECC P10 文本 ────────────────────────────────
+        form.on('submit(eccP10TextButton)', function (data) {
+            var curve = data.field.eccCurve || 'prime256v1';
+            easyAdmin.http({
+                url: '/api/v2/cert/ecc-p10PemStr/' + curve, sendToken: false,
+                data: JSON.stringify(data.field), dataType: 'json',
+                contentType: 'application/json', type: 'POST',
+                success: function (result) {
+                    if (result.success) downloadByHref('/api/v2/cert/download-ecc-cert/' + curve + '/' + encodeURIComponent(result.data));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+            return false;
+        });
+
+        // ── T05: CSR 解析 ───────────────────────────────
+        $('#csrParseBtn').on('click', function () {
+            var csr = $('#csrParseInput').val();
+            if (!csr || !csr.trim()) { layer.msg('请输入 CSR'); return; }
+            easyAdmin.http({
+                url: '/api/v2/cert/csr/parse', sendToken: false,
+                data: csr, contentType: 'text/plain', type: 'POST', dataType: 'json',
+                success: function (result) {
+                    if (result.success) {
+                        $('#csrParseResult').show().text(JSON.stringify(result.data, null, 2));
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 2000});
+                    }
+                }
+            });
+        });
+
+        // ── T06: CSR 预览/签发 ──────────────────────────
+        function buildCsrSignPayload() {
+            var csku = ['csku_digitalSignature','csku_nonRepudiation','csku_keyEncipherment','csku_dataEncipherment','csku_keyAgreement','csku_keyCertSign','csku_cRLSign'];
+            var cseku = ['cseku_serverAuth','cseku_clientAuth','cseku_codeSigning','cseku_emailProtection','cseku_timeStamping','cseku_ocspSigning'];
+            var f = {};
+            $('#csr-sign-form').find('input, select, textarea').each(function () {
+                var el = $(this);
+                if (el.attr('type') === 'checkbox') f[el.attr('name')] = el.prop('checked');
+                else f[el.attr('name')] = el.val();
+            });
+            return {
+                csrContent: f.csrContent,
+                algorithm: f.algorithm || null,
+                curve: f.curve || null,
+                certValidMonth: f.certValidMonth ? parseInt(f.certValidMonth, 10) : null,
+                keyUsages: collectChecked(f, csku).map(function (k) { return k; }),
+                extendedKeyUsages: collectChecked(f, cseku).map(function (k) { return k; }),
+                subjectAltNames: parseSans(f.sans),
+                basicConstraintsCA: f.basicConstraintsCA ? true : null
+            };
+        }
+
+        $('#csrPreviewBtn').on('click', function () {
+            var payload = buildCsrSignPayload();
+            if (!payload.csrContent) { layer.msg('请输入 CSR'); return; }
+            easyAdmin.http({
+                url: '/api/v2/cert/csr/preview', sendToken: false,
+                data: JSON.stringify(payload), contentType: 'application/json',
+                type: 'POST', dataType: 'json',
+                success: function (result) {
+                    if (result.success) $('#csrPreviewBox').show().text(JSON.stringify(result.data, null, 2));
+                    else layer.msg(result.msg, {icon: 2, time: 2000});
+                }
+            });
+        });
+
+        $('#csrSignBtn').on('click', function () {
+            var payload = buildCsrSignPayload();
+            if (!payload.csrContent) { layer.msg('请输入 CSR'); return; }
+            easyAdmin.http({
+                url: '/api/v2/cert/csr/sign', sendToken: false,
+                data: JSON.stringify(payload), contentType: 'application/json',
+                type: 'POST', dataType: 'json',
+                success: function (result) {
+                    if (result.success) {
+                        var cn = result.data;
+                        var algo = payload.algorithm || 'SM2';
+                        var path = '/api/v2/cert/download/' + algo + '/' + encodeURIComponent(cn);
+                        if (algo === 'ECC') path += '?curve=' + encodeURIComponent(payload.curve || 'prime256v1');
+                        downloadByHref(path);
+                    } else {
+                        layer.msg(result.msg, {icon: 2, time: 2000});
+                    }
+                }
+            });
+        });
+    })
+</script>
+</body>
+</html>

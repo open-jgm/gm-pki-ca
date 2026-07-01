@@ -1,0 +1,1797 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>证书签发系统</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 14px;
+            color: #333;
+            background: #f0f2f5;
+            min-height: 100vh;
+        }
+
+        /* ── Layout ─────────────────────────────────────── */
+        .page-wrapper {
+            max-width: 860px;
+            margin: 24px auto;
+            padding: 0 16px 40px;
+        }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .page-header h1 {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+
+        /* ── CA Download Bar ─────────────────────────────── */
+        .ca-bar {
+            background: #fff;
+            border-radius: 8px;
+            padding: 12px 20px;
+            margin-bottom: 16px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        }
+
+        .ca-bar span { font-size: 13px; color: #666; white-space: nowrap; }
+
+        .ca-link {
+            display: inline-block;
+            padding: 5px 14px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            text-decoration: none;
+            transition: opacity .15s;
+            white-space: nowrap;
+        }
+        .ca-link:hover { opacity: .8; }
+        .ca-link.rsa  { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .ca-link.sm2  { background: #e3f2fd; color: #1565c0; border: 1px solid #90caf9; }
+        .ca-link.ecc  { background: #fff8e1; color: #e65100; border: 1px solid #ffe082; }
+
+        /* ── Card ────────────────────────────────────────── */
+        .card {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 4px rgba(0,0,0,.08);
+            overflow: hidden;
+        }
+
+        /* ── Tabs ────────────────────────────────────────── */
+        .tab-nav {
+            display: flex;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #e5e7eb;
+            background: #fafafa;
+            padding: 0 4px;
+        }
+
+        .tab-btn {
+            padding: 12px 18px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #555;
+            background: none;
+            border: none;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color .15s, border-color .15s;
+            white-space: nowrap;
+        }
+        .tab-btn:hover { color: #1677ff; }
+        .tab-btn.active { color: #1677ff; border-bottom-color: #1677ff; }
+
+        .tab-pane { display: none; padding: 28px 32px 32px; }
+        .tab-pane.active { display: block; }
+
+        /* ── Form ─────────────────────────────────��──────── */
+        .pane-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            color: #111;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .pane-title .badge {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 7px;
+            border-radius: 10px;
+            background: #e8f4ff;
+            color: #0958d9;
+        }
+
+        .form-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 14px;
+            gap: 0;
+        }
+
+        .form-label {
+            width: 80px;
+            flex-shrink: 0;
+            text-align: right;
+            padding-right: 12px;
+            color: #555;
+            font-size: 13px;
+        }
+
+        .form-control {
+            flex: 1;
+            height: 36px;
+            padding: 0 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #333;
+            background: #fff;
+            transition: border-color .15s, box-shadow .15s;
+            outline: none;
+        }
+        .form-control:focus {
+            border-color: #1677ff;
+            box-shadow: 0 0 0 2px rgba(22,119,255,.12);
+        }
+
+        textarea.form-control {
+            height: 280px;
+            padding: 10px;
+            resize: vertical;
+            line-height: 1.5;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 12px;
+        }
+
+        select.form-control { cursor: pointer; }
+
+        .form-hint {
+            font-size: 12px;
+            color: #e53e3e;
+            margin-bottom: 16px;
+            padding: 6px 10px;
+            background: #fff5f5;
+            border-left: 3px solid #e53e3e;
+            border-radius: 2px;
+        }
+
+        /* ── File upload area ────────────────────────────── */
+        .upload-area {
+            border: 2px dashed #d9d9d9;
+            border-radius: 6px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color .15s, background .15s;
+            margin-bottom: 16px;
+            position: relative;
+        }
+        .upload-area:hover, .upload-area.drag-over {
+            border-color: #1677ff;
+            background: #f0f7ff;
+        }
+        .upload-area input[type=file] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .upload-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+        .upload-area p { font-size: 14px; color: #666; }
+        .upload-area small { font-size: 12px; color: #aaa; }
+        .upload-filename {
+            margin-top: 10px;
+            font-size: 13px;
+            color: #1677ff;
+            font-weight: 500;
+        }
+
+        /* ── Button ──────────────────────────────────────── */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 20px;
+            height: 36px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background .15s, opacity .15s, transform .05s;
+            outline: none;
+        }
+        .btn:active { transform: scale(.97); }
+        .btn-primary { background: #1677ff; color: #fff; }
+        .btn-primary:hover { background: #0958d9; }
+        .btn-primary:disabled { background: #b0d0ff; cursor: not-allowed; }
+
+        /* ── Toast ───────────────────────────────────────── */
+        #toast-container {
+            position: fixed;
+            top: 24px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        .toast {
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 16px rgba(0,0,0,.15);
+            animation: slideIn .25s ease;
+            pointer-events: auto;
+            max-width: 340px;
+        }
+        .toast.success { background: #f6ffed; color: #389e0d; border: 1px solid #b7eb8f; }
+        .toast.error   { background: #fff2f0; color: #cf1322; border: 1px solid #ffccc7; }
+        .toast.info    { background: #e6f4ff; color: #0958d9; border: 1px solid #91caff; }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(30px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── Spinner ─────────────────────────────────────── */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,.5);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin .6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── Extension panel (T02) ────────────────────────── */
+        .ext-panel {
+            background: #f7f8fa;
+            border: 1px dashed #c9d1d9;
+            padding: 12px 16px;
+            margin: 12px 0;
+            border-radius: 4px;
+        }
+        .ext-panel .ext-title {
+            font-weight: 600;
+            color: #3f4a5c;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+        .chk-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px 18px;
+            margin: 6px 0 12px;
+        }
+        .chk-row label {
+            font-size: 13px;
+            color: #333;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+        }
+        .preview-box {
+            background: #fafafa;
+            border: 1px solid #e0e4ea;
+            padding: 12px 16px;
+            margin-top: 12px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 380px;
+            overflow: auto;
+            font-family: "SFMono-Regular", Consolas, Menlo, monospace;
+            font-size: 12px;
+            color: #2a2a2a;
+        }
+        .btn-secondary { background: #f5f5f5; color: #333; border: 1px solid #d9d9d9; }
+        .btn-secondary:hover { background: #e8e8e8; }
+        .asn1-frame {
+            width: 100%;
+            min-height: calc(100vh - 220px);
+            border: 1px solid #e0e4ea;
+            border-radius: 4px;
+            background: #fff;
+        }
+
+        /* ── Responsive ──────────────────────────────────── */
+        @media (max-width: 600px) {
+            .tab-pane { padding: 20px 16px 24px; }
+            .form-label { width: 64px; font-size: 12px; }
+            .tab-btn { padding: 10px 12px; font-size: 12px; }
+            .ca-bar { gap: 8px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<div class="page-wrapper">
+    <div class="page-header">
+        <h1>证书签发系统</h1>
+    </div>
+
+    <!-- CA Download Bar -->
+    <div class="ca-bar">
+        <span>下载根证书：</span>
+        <a class="ca-link rsa" href="/api/v2/cert/download-rsa-ca">RSA 根证书</a>
+        <a class="ca-link sm2" href="/api/v2/cert/download-sm2-ca">SM2 根证书</a>
+        <a class="ca-link ecc" href="/api/v2/cert/download-ecc-ca/prime256v1">ECC P-256</a>
+        <a class="ca-link ecc" href="/api/v2/cert/download-ecc-ca/brainpoolP256r1">ECC BP256</a>
+        <a class="ca-link ecc" href="/api/v2/cert/download-ecc-ca/FRP256v1">ECC FRP256</a>
+    </div>
+
+    <!-- Main card -->
+    <div class="card">
+        <div class="tab-nav" role="tablist">
+            <button class="tab-btn active" data-tab="unified"   role="tab">统一签发(T04)</button>
+            <button class="tab-btn"        data-tab="sm2-p12"   role="tab">SM2 直接生成</button>
+            <button class="tab-btn"        data-tab="csr-generate" role="tab">生成 CSR</button>
+            <button class="tab-btn"        data-tab="sm2-p10f"  role="tab">SM2 P10 文件</button>
+            <button class="tab-btn"        data-tab="sm2-p10s"  role="tab">SM2 P10 文本</button>
+            <button class="tab-btn"        data-tab="rsa-p12"   role="tab">RSA 直接生成</button>
+            <button class="tab-btn"        data-tab="rsa-p10s"  role="tab">RSA P10 文本</button>
+            <button class="tab-btn"        data-tab="ecc-p12"   role="tab">ECC 直接生成</button>
+            <button class="tab-btn"        data-tab="ecc-p10s"  role="tab">ECC P10 文本</button>
+            <button class="tab-btn"        data-tab="csr-parse" role="tab">CSR 解析(T05)</button>
+            <button class="tab-btn"        data-tab="csr-sign"  role="tab">CSR 两步签发(T06)</button>
+            <button class="tab-btn"        data-tab="ca-mgmt"   role="tab">CA 管理(T07-T11)</button>
+            <button class="tab-btn"        data-tab="envelope"  role="tab">数字信封(T17-T20)</button>
+            <button class="tab-btn"        data-tab="cert-parse" role="tab">证书解析(T22)</button>
+            <button class="tab-btn"        data-tab="key-inspect" role="tab">密钥检查(T24)</button>
+            <button class="tab-btn"        data-tab="chain-inspect" role="tab">证书链(T25)</button>
+            <button class="tab-btn"        data-tab="crl"       role="tab">CRL(T26-T27)</button>
+            <button class="tab-btn"        data-tab="asn1"      role="tab">ASN.1 解析</button>
+            <button class="tab-btn"        data-tab="tools"     role="tab">编解码(T28)</button>
+        </div>
+
+        <!-- ── Tab 0: T04 统一签发 ─────────────────────────── -->
+        <div class="tab-pane active" id="tab-unified">
+            <div class="pane-title">统一证书签发 <span class="badge">T01+T02+T04</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678；ECC 必须选择曲线；BOTH/ENC 仅 SM2 支持</div>
+            <form id="form-unified" autocomplete="off">
+                <div class="form-row">
+                    <label class="form-label">算　法</label>
+                    <select class="form-control" name="algorithm" id="unified-algo">
+                        <option value="SM2" selected>SM2</option>
+                        <option value="RSA">RSA</option>
+                        <option value="ECC">ECC</option>
+                    </select>
+                </div>
+                <div class="form-row" id="unified-curve-row" style="display:none">
+                    <label class="form-label">ECC曲线</label>
+                    <select class="form-control" name="curve">
+                        <option value="prime256v1" selected>prime256v1</option>
+                        <option value="brainpoolP256r1">brainpoolP256r1</option>
+                        <option value="FRP256v1">FRP256v1</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">证书用途</label>
+                    <select class="form-control" name="certUsage">
+                        <option value="">默认(SM2=BOTH, RSA/ECC=SIGN)</option>
+                        <option value="SIGN">SIGN 签名</option>
+                        <option value="ENC">ENC 加密 (仅SM2)</option>
+                        <option value="BOTH">BOTH 双证书 (仅SM2)</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">签发CA</label>
+                    <select class="form-control" name="caId" id="unified-caId">
+                        <option value="">默认内置 CA（按算法）</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">签名算法</label>
+                    <input class="form-control" name="signatureAlg" placeholder="可选，例:SHA256withRSA / SM3withSM2">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">摘要算法</label>
+                    <input class="form-control" name="digestAlg" placeholder="可选，例:SHA-256 / SM3">
+                </div>
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">输出格式</label>
+                    <div class="chk-row" style="flex:1; margin:6px 0">
+                        <label><input type="checkbox" name="of_PEM" checked> PEM</label>
+                        <label><input type="checkbox" name="of_DER" checked> DER</label>
+                        <label><input type="checkbox" name="of_P12" checked> P12</label>
+                        <label><input type="checkbox" name="of_JKS"> JKS (RSA/ECC)</label>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">生效月数</label>
+                    <input class="form-control" name="certValidMonth" type="number" min="1" max="360" value="240">
+                </div>
+                <div class="form-row"><label class="form-label">国　家</label><input class="form-control" name="dn_c" value="CN" required></div>
+                <div class="form-row"><label class="form-label">省　市</label><input class="form-control" name="dn_st" value="hunan" required></div>
+                <div class="form-row"><label class="form-label">市　县</label><input class="form-control" name="dn_l" value="changsha" required></div>
+                <div class="form-row"><label class="form-label">单　位</label><input class="form-control" name="dn_o" required></div>
+                <div class="form-row"><label class="form-label">部　门</label><input class="form-control" name="dn_ou" required></div>
+                <div class="form-row"><label class="form-label">名　称</label><input class="form-control" name="dn_cn" required></div>
+                <div class="form-row"><label class="form-label">邮　箱</label><input class="form-control" name="dn_email" type="email"></div>
+
+                <div class="ext-panel">
+                    <div class="ext-title">X.509 扩展（T02，可选）</div>
+                    <div style="font-size:12px;color:#666;margin-bottom:4px">KeyUsage:</div>
+                    <div class="chk-row">
+                        <label><input type="checkbox" name="ku_digitalSignature"> digitalSignature</label>
+                        <label><input type="checkbox" name="ku_nonRepudiation"> nonRepudiation</label>
+                        <label><input type="checkbox" name="ku_keyEncipherment"> keyEncipherment</label>
+                        <label><input type="checkbox" name="ku_dataEncipherment"> dataEncipherment</label>
+                        <label><input type="checkbox" name="ku_keyAgreement"> keyAgreement</label>
+                        <label><input type="checkbox" name="ku_keyCertSign"> keyCertSign</label>
+                        <label><input type="checkbox" name="ku_cRLSign"> cRLSign</label>
+                    </div>
+                    <div style="font-size:12px;color:#666;margin-bottom:4px">ExtendedKeyUsage:</div>
+                    <div class="chk-row">
+                        <label><input type="checkbox" name="eku_serverAuth"> serverAuth</label>
+                        <label><input type="checkbox" name="eku_clientAuth"> clientAuth</label>
+                        <label><input type="checkbox" name="eku_codeSigning"> codeSigning</label>
+                        <label><input type="checkbox" name="eku_emailProtection"> emailProtection</label>
+                        <label><input type="checkbox" name="eku_timeStamping"> timeStamping</label>
+                        <label><input type="checkbox" name="eku_ocspSigning"> OCSPSigning</label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" style="font-size:12px">SAN</label>
+                        <input class="form-control" name="sans" placeholder="DNS:example.com,IP:1.2.3.4,EMAIL:a@b.com">
+                    </div>
+                    <div class="chk-row">
+                        <label><input type="checkbox" name="basicConstraintsCA"> BasicConstraints CA</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-unified">签　发</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 1: SM2 直接生成 P12 ─────────────────────── -->
+        <div class="tab-pane" id="tab-sm2-p12">
+            <div class="pane-title">SM2 用户证书签发 <span class="badge">服务端生成密钥</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <form id="form-sm2-p12" autocomplete="off">
+                <div class="form-row">
+                    <label class="form-label">生效月数</label>
+                    <input class="form-control" name="certValidMonth" type="number" min="1" max="360" value="240" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">国　家</label>
+                    <input class="form-control" name="dn_c" placeholder="DN_C" value="CN" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">省　市</label>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">市　县</label>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">地　址</label>
+                    <input class="form-control" name="dn_street" placeholder="DN_S（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">单　位</label>
+                    <input class="form-control" name="dn_o" placeholder="DN_O" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">部　门</label>
+                    <input class="form-control" name="dn_ou" placeholder="DN_OU" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">名　称</label>
+                    <input class="form-control" name="dn_cn" placeholder="DN_CN（唯一标识）" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">邮　箱</label>
+                    <input class="form-control" name="dn_email" type="email" placeholder="DN_E（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-sm2-p12">提　交</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 1.1: 生成 CSR ─────────────────────────── -->
+        <div class="tab-pane" id="tab-csr-generate">
+            <div class="pane-title">SM2 CSR 生成 <span class="badge">下载 CSR + 私钥</span></div>
+            <div class="form-hint">输入 DN 后下载 ZIP，包含 .csr.pem 和对应 .key.pem</div>
+            <form id="form-csr-generate" autocomplete="off">
+                <div class="form-row">
+                    <label class="form-label">国　家</label>
+                    <input class="form-control" name="dn_c" placeholder="DN_C" value="CN" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">省　市</label>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">市　县</label>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">地　址</label>
+                    <input class="form-control" name="dn_street" placeholder="DN_S（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">单　位</label>
+                    <input class="form-control" name="dn_o" placeholder="DN_O" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">部　门</label>
+                    <input class="form-control" name="dn_ou" placeholder="DN_OU" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">名　称</label>
+                    <input class="form-control" name="dn_cn" placeholder="DN_CN（唯一标识）" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">邮　箱</label>
+                    <input class="form-control" name="dn_email" type="email" placeholder="DN_E（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-csr-generate">生成并下载</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 2: SM2 P10 文件 ───────────────────────── -->
+        <div class="tab-pane" id="tab-sm2-p10f">
+            <div class="pane-title">SM2 P10 文件上传 <span class="badge">CSR 签发</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="upload-area" id="upload-sm2-p10f-area">
+                <input type="file" id="upload-sm2-p10f-input" accept=".pem,.p10,.csr,.cer,.txt">
+                <div class="upload-icon">📄</div>
+                <p>点击或拖拽 P10 文件到此处</p>
+                <small>支持 .pem / .p10 / .csr 格式</small>
+                <div class="upload-filename" id="upload-sm2-p10f-name"></div>
+            </div>
+            <button class="btn btn-primary" id="btn-sm2-p10f" disabled>提　交</button>
+        </div>
+
+        <!-- ── Tab 3: SM2 P10 文本 ───────────────────────── -->
+        <div class="tab-pane" id="tab-sm2-p10s">
+            <div class="pane-title">SM2 P10 文本签发 <span class="badge">CSR 签发</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <form id="form-sm2-p10s" autocomplete="off">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">P10 内容</label>
+                    <textarea class="form-control" name="p10PemStr" placeholder="请粘贴 p10.pem 文件内容（-----BEGIN CERTIFICATE REQUEST----- ...）" required></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-sm2-p10s">提　交</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 4: RSA 直接生成 P12 ─────────────────────── -->
+        <div class="tab-pane" id="tab-rsa-p12">
+            <div class="pane-title">RSA 用户证书签发 <span class="badge">服务端生成密钥</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <form id="form-rsa-p12" autocomplete="off">
+                <div class="form-row">
+                    <label class="form-label">生效月数</label>
+                    <input class="form-control" name="certValidMonth" type="number" min="1" max="360" value="240" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">国　家</label>
+                    <input class="form-control" name="dn_c" placeholder="DN_C" value="CN" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">省　市</label>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">市　县</label>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">地　址</label>
+                    <input class="form-control" name="dn_street" placeholder="DN_S（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">单　位</label>
+                    <input class="form-control" name="dn_o" placeholder="DN_O" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">部　门</label>
+                    <input class="form-control" name="dn_ou" placeholder="DN_OU" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">名　称</label>
+                    <input class="form-control" name="dn_cn" placeholder="DN_CN（唯一标识）" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">邮　箱</label>
+                    <input class="form-control" name="dn_email" type="email" placeholder="DN_E（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-rsa-p12">提　交</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 5: RSA P10 文本 ───────────────────────── -->
+        <div class="tab-pane" id="tab-rsa-p10s">
+            <div class="pane-title">RSA P10 文本签发 <span class="badge">CSR 签发</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <form id="form-rsa-p10s" autocomplete="off">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">P10 内容</label>
+                    <textarea class="form-control" name="p10PemStr" placeholder="请粘贴 p10.pem 文件内容" required></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-rsa-p10s">提　交</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 6: ECC 直接生成 P12 ─────────────────────── -->
+        <div class="tab-pane" id="tab-ecc-p12">
+            <div class="pane-title">ECC 用户证书签发 <span class="badge">服务端生成密钥</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <form id="form-ecc-p12" autocomplete="off">
+                <div class="form-row">
+                    <label class="form-label">曲　线</label>
+                    <select class="form-control" name="eccCurve">
+                        <option value="prime256v1" selected>prime256v1 (P-256 / secp256r1)</option>
+                        <option value="brainpoolP256r1">brainpoolP256r1</option>
+                        <option value="FRP256v1">FRP256v1</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">生效月数</label>
+                    <input class="form-control" name="certValidMonth" type="number" min="1" max="360" value="240" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">国　家</label>
+                    <input class="form-control" name="dn_c" placeholder="DN_C" value="CN" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">省　市</label>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">市　县</label>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">地　址</label>
+                    <input class="form-control" name="dn_street" placeholder="DN_S（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label">单　位</label>
+                    <input class="form-control" name="dn_o" placeholder="DN_O" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">部　门</label>
+                    <input class="form-control" name="dn_ou" placeholder="DN_OU" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">名　称</label>
+                    <input class="form-control" name="dn_cn" placeholder="DN_CN（唯一标识）" required>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">邮　箱</label>
+                    <input class="form-control" name="dn_email" type="email" placeholder="DN_E（选填）">
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-ecc-p12">提　交</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 7: ECC P10 文本 ───────────────────────── -->
+        <div class="tab-pane" id="tab-ecc-p10s">
+            <div class="pane-title">ECC P10 文本签发 <span class="badge">CSR 签发</span></div>
+            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <form id="form-ecc-p10s" autocomplete="off">
+                <div class="form-row">
+                    <label class="form-label">曲　线</label>
+                    <select class="form-control" name="eccCurve">
+                        <option value="prime256v1" selected>prime256v1 (P-256 / secp256r1)</option>
+                        <option value="brainpoolP256r1">brainpoolP256r1</option>
+                        <option value="FRP256v1">FRP256v1</option>
+                    </select>
+                </div>
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">P10 内容</label>
+                    <textarea class="form-control" name="p10PemStr" placeholder="请粘贴 p10.pem 文件内容" required></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-primary" type="submit" id="btn-ecc-p10s">提　交</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- ── Tab 8: T05 CSR 解析 ─────────────────────────── -->
+        <div class="tab-pane" id="tab-csr-parse">
+            <div class="pane-title">CSR 解析 <span class="badge">T05</span></div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">CSR</label>
+                <textarea class="form-control" id="csrParseInput" placeholder="粘贴 PKCS#10 CSR (PEM 或 base64 DER)"></textarea>
+            </div>
+            <div class="form-row">
+                <label class="form-label"></label>
+                <button class="btn btn-primary" id="btn-csr-parse">解 析</button>
+            </div>
+            <div id="csrParseResult" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ── Tab 9: T06 CSR 两步签发 ─────────────────────── -->
+        <div class="tab-pane" id="tab-csr-sign">
+            <div class="pane-title">CSR 两步签发 <span class="badge">T06</span></div>
+            <div class="form-hint">先点【预览】查看 CSR 解析与默认扩展，确认无误后点【签发】。</div>
+            <form id="form-csr-sign" autocomplete="off">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">CSR</label>
+                    <textarea class="form-control" name="csrContent" placeholder="粘贴 PKCS#10 CSR" required></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">算　法</label>
+                    <select class="form-control" name="algorithm" id="csrsign-algo">
+                        <option value="">自动检测</option>
+                        <option value="SM2">SM2</option>
+                        <option value="RSA">RSA</option>
+                        <option value="ECC">ECC</option>
+                    </select>
+                </div>
+                <div class="form-row" id="csrsign-curve-row" style="display:none">
+                    <label class="form-label">ECC曲线</label>
+                    <select class="form-control" name="curve">
+                        <option value="prime256v1" selected>prime256v1</option>
+                        <option value="brainpoolP256r1">brainpoolP256r1</option>
+                        <option value="FRP256v1">FRP256v1</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">有效月数</label>
+                    <input class="form-control" name="certValidMonth" type="number" min="1" max="360" placeholder="可选">
+                </div>
+
+                <div class="ext-panel">
+                    <div class="ext-title">追加扩展（合并到 CSR 中已请求项）</div>
+                    <div style="font-size:12px;color:#666;margin-bottom:4px">KeyUsage:</div>
+                    <div class="chk-row">
+                        <label><input type="checkbox" name="csku_digitalSignature"> digitalSignature</label>
+                        <label><input type="checkbox" name="csku_nonRepudiation"> nonRepudiation</label>
+                        <label><input type="checkbox" name="csku_keyEncipherment"> keyEncipherment</label>
+                        <label><input type="checkbox" name="csku_dataEncipherment"> dataEncipherment</label>
+                        <label><input type="checkbox" name="csku_keyAgreement"> keyAgreement</label>
+                        <label><input type="checkbox" name="csku_keyCertSign"> keyCertSign</label>
+                        <label><input type="checkbox" name="csku_cRLSign"> cRLSign</label>
+                    </div>
+                    <div style="font-size:12px;color:#666;margin-bottom:4px">ExtendedKeyUsage:</div>
+                    <div class="chk-row">
+                        <label><input type="checkbox" name="cseku_serverAuth"> serverAuth</label>
+                        <label><input type="checkbox" name="cseku_clientAuth"> clientAuth</label>
+                        <label><input type="checkbox" name="cseku_codeSigning"> codeSigning</label>
+                        <label><input type="checkbox" name="cseku_emailProtection"> emailProtection</label>
+                        <label><input type="checkbox" name="cseku_timeStamping"> timeStamping</label>
+                        <label><input type="checkbox" name="cseku_ocspSigning"> OCSPSigning</label>
+                    </div>
+                    <div class="form-row">
+                        <label class="form-label" style="font-size:12px">SAN</label>
+                        <input class="form-control" name="sans" placeholder="DNS:example.com,IP:1.2.3.4">
+                    </div>
+                    <div class="chk-row">
+                        <label><input type="checkbox" name="basicConstraintsCA"> BasicConstraints CA</label>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <label class="form-label"></label>
+                    <button class="btn btn-secondary" type="button" id="btn-csr-preview">预 览</button>
+                    &nbsp;
+                    <button class="btn btn-primary" type="submit" id="btn-csr-sign">签 发</button>
+                </div>
+            </form>
+            <div id="csrPreviewBox" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 10: CA 管理 (T07-T11)
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-ca-mgmt">
+            <div class="pane-title">自建 CA 管理 <span class="badge">T07-T11</span></div>
+            <div class="form-hint">需要管理员 token；所有 /api/v2/ca/** 请求自动附加 X-Admin-Token 头</div>
+
+            <div class="form-row">
+                <label class="form-label">Admin Token</label>
+                <input class="form-control" id="admin-token" type="password" placeholder="X-Admin-Token（环境变量 CERT_ADMIN_TOKEN）">
+            </div>
+
+            <div class="ext-panel">
+                <div class="ext-title">上传自建 CA（JSON / Base64 P12）</div>
+                <form id="form-ca-upload" autocomplete="off">
+                    <div class="form-row"><label class="form-label">名　称</label><input class="form-control" name="name" required placeholder="MyCorp Sub CA"></div>
+                    <div class="form-row"><label class="form-label">P12 Base64</label><input class="form-control" name="p12Base64" placeholder="可选；与 PEM 二选一"></div>
+                    <div class="form-row"><label class="form-label">P12 口令</label><input class="form-control" name="p12Password" placeholder="P12 文件口令"></div>
+                    <div class="form-row" style="align-items:flex-start">
+                        <label class="form-label" style="padding-top:8px">证书 PEM</label>
+                        <textarea class="form-control" name="certPem" placeholder="可选；与 P12 二选一" style="height:120px"></textarea>
+                    </div>
+                    <div class="form-row" style="align-items:flex-start">
+                        <label class="form-label" style="padding-top:8px">私钥 PEM</label>
+                        <textarea class="form-control" name="privateKeyPem" style="height:120px"></textarea>
+                    </div>
+                    <div class="form-row"><label class="form-label">ECC 曲线</label><input class="form-control" name="curve" placeholder="仅 ECC 必填：prime256v1 等"></div>
+                    <div class="form-row"><label class="form-label"></label>
+                        <button class="btn btn-primary" type="submit" id="btn-ca-upload">上 传</button>
+                        &nbsp;
+                        <button class="btn btn-secondary" type="button" id="btn-ca-refresh">刷新列表</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="ext-panel">
+                <div class="ext-title">CA 列表</div>
+                <div id="ca-list" class="preview-box" style="display:block">点击 "刷新列表" 加载</div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 11: 数字信封 (T17-T20)
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-envelope">
+            <div class="pane-title">数字信封 <span class="badge">T17-T20</span></div>
+            <div class="form-hint">SM2 证书→SM4-CBC + SM2-Encrypt；RSA 证书→AES-128-CBC + RSA-PKCS1。</div>
+
+            <div class="form-row">
+                <label class="form-label">操　作</label>
+                <select class="form-control" id="env-op">
+                    <option value="encrypt" selected>加密 encrypt</option>
+                    <option value="decrypt">解密 decrypt</option>
+                    <option value="parse">解析 parse</option>
+                </select>
+            </div>
+
+            <div id="env-encrypt-pane">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">明　文</label>
+                    <textarea class="form-control" id="env-plain" placeholder="任意明文" style="height:100px"></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">明文编码</label>
+                    <select class="form-control" id="env-plain-encoding">
+                        <option value="utf8" selected>UTF-8 文本（自动 base64 化）</option>
+                        <option value="base64">已是 base64</option>
+                    </select>
+                </div>
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">收件人证书</label>
+                    <textarea class="form-control" id="env-cert" placeholder="PEM 或 base64 DER" style="height:120px"></textarea>
+                </div>
+                <div class="form-row"><label class="form-label"></label>
+                    <button class="btn btn-primary" id="btn-env-encrypt">加 密</button>
+                </div>
+            </div>
+
+            <div id="env-decrypt-pane" style="display:none">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">信封 base64</label>
+                    <textarea class="form-control" id="env-envelope" style="height:100px"></textarea>
+                </div>
+                <div class="form-row"><label class="form-label">P12 Base64</label><input class="form-control" id="env-p12" placeholder="P12 base64（与 PEM 二选一）"></div>
+                <div class="form-row"><label class="form-label">P12 口令</label><input class="form-control" id="env-p12pwd"></div>
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">私钥 PEM</label>
+                    <textarea class="form-control" id="env-priv" style="height:100px"></textarea>
+                </div>
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">拥有者证书</label>
+                    <textarea class="form-control" id="env-owner" placeholder="（多收件人时必填）" style="height:80px"></textarea>
+                </div>
+                <div class="form-row"><label class="form-label"></label>
+                    <button class="btn btn-primary" id="btn-env-decrypt">解 密</button>
+                </div>
+            </div>
+
+            <div id="env-parse-pane" style="display:none">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">信封 base64</label>
+                    <textarea class="form-control" id="env-parse-input" style="height:120px"></textarea>
+                </div>
+                <div class="form-row"><label class="form-label"></label>
+                    <button class="btn btn-primary" id="btn-env-parse">解 析</button>
+                </div>
+            </div>
+
+            <div id="env-result" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 12: 证书解析（含 v3 扩展项, T22）
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-cert-parse">
+            <div class="pane-title">证书解析 <span class="badge">T22 含扩展项</span></div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">证书</label>
+                <textarea class="form-control" id="cert-parse-input" placeholder="PEM 或 base64 DER"></textarea>
+            </div>
+            <div class="form-row"><label class="form-label"></label>
+                <button class="btn btn-primary" id="btn-cert-parse">解 析</button>
+            </div>
+            <div id="cert-parse-result" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 13: 密钥检查 (T24)
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-key-inspect">
+            <div class="pane-title">私钥检查 <span class="badge">T24 含证书匹配</span></div>
+            <div class="form-hint">仅私钥 → 算法/曲线/位长；附证书 → 校验私钥/证书是否匹配。</div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">私钥 PEM</label>
+                <textarea class="form-control" id="key-priv" placeholder="-----BEGIN PRIVATE KEY----- ..."></textarea>
+            </div>
+            <div class="form-row"><label class="form-label">口　令</label><input class="form-control" id="key-pwd" placeholder="加密私钥时填"></div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">证书</label>
+                <textarea class="form-control" id="key-cert" placeholder="可选 — PEM 或 base64 DER" style="height:100px"></textarea>
+            </div>
+            <div class="form-row"><label class="form-label"></label>
+                <button class="btn btn-primary" id="btn-key-inspect">检 查</button>
+            </div>
+            <div id="key-inspect-result" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 14: 证书链验证 (T25)
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-chain-inspect">
+            <div class="pane-title">证书链信任路径验证 <span class="badge">T25</span></div>
+            <div class="form-hint">每行一张证书的 base64 DER 或一段 PEM 块（多行 PEM 用空行分隔）。链顺序：EE → SubCA → RootCA</div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">证书链</label>
+                <textarea class="form-control" id="chain-input" placeholder="每张证书一段 PEM，多张用空行分隔" style="height:200px"></textarea>
+            </div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">信任锚</label>
+                <textarea class="form-control" id="chain-anchors" placeholder="可选 — 锚证书（同样多 PEM）" style="height:120px"></textarea>
+            </div>
+            <div class="form-row"><label class="form-label"></label>
+                <button class="btn btn-primary" id="btn-chain-inspect">验 证</button>
+            </div>
+            <div id="chain-result" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 15: CRL (T26-T27)
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-crl">
+            <div class="pane-title">CRL <span class="badge">T26-T27</span></div>
+            <div class="form-row">
+                <label class="form-label">操　作</label>
+                <select class="form-control" id="crl-op">
+                    <option value="generate" selected>生成 CRL</option>
+                    <option value="parse">解析 CRL</option>
+                </select>
+            </div>
+
+            <div id="crl-generate-pane">
+                <div class="form-row"><label class="form-label">caId</label><input class="form-control" id="crl-caId" placeholder="builtin:SM2 / builtin:RSA / custom:..."></div>
+                <div class="form-row"><label class="form-label">有效天数</label><input class="form-control" id="crl-validDays" type="number" min="1" value="30"></div>
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">被吊销条目</label>
+                    <textarea class="form-control" id="crl-entries" placeholder='JSON 数组，每项 {"serialNumberHex":"1a2b","reason":1}' style="height:140px"></textarea>
+                </div>
+                <div class="form-row"><label class="form-label"></label>
+                    <button class="btn btn-primary" id="btn-crl-generate">生 成</button>
+                </div>
+            </div>
+
+            <div id="crl-parse-pane" style="display:none">
+                <div class="form-row" style="align-items:flex-start">
+                    <label class="form-label" style="padding-top:8px">CRL base64</label>
+                    <textarea class="form-control" id="crl-parse-input" style="height:140px"></textarea>
+                </div>
+                <div class="form-row"><label class="form-label"></label>
+                    <button class="btn btn-primary" id="btn-crl-parse">解 析</button>
+                </div>
+            </div>
+
+            <div id="crl-result" class="preview-box" style="display:none"></div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 16: ASN.1 解析
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-asn1">
+            <div class="pane-title">ASN.1 数据解析 <span class="badge">asn1js</span></div>
+            <div class="form-hint">可粘贴 PEM/Base64/Hex/DER 数据，或加载示例文件进行结构化解析。</div>
+            <iframe class="asn1-frame" src="asn1js/index.html" title="ASN.1 数据解析"></iframe>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════
+             Tab 17: 编解码工具 (T28)
+        ══════════════════════════════════════════════════ -->
+        <div class="tab-pane" id="tab-tools">
+            <div class="pane-title">编解码工具 <span class="badge">T28</span></div>
+            <div class="form-row">
+                <label class="form-label">类　型</label>
+                <select class="form-control" id="tool-type">
+                    <option value="base64" selected>Base64 编/解码</option>
+                    <option value="hex">Hex 编/解码</option>
+                    <option value="asn1">ASN.1 解码</option>
+                </select>
+            </div>
+            <div class="form-row" id="tool-op-row">
+                <label class="form-label">操　作</label>
+                <select class="form-control" id="tool-op">
+                    <option value="encode" selected>encode</option>
+                    <option value="decode">decode</option>
+                </select>
+            </div>
+            <div class="form-row" id="tool-enc-row">
+                <label class="form-label">输入编码</label>
+                <select class="form-control" id="tool-input-encoding">
+                    <option value="plain" selected>plain (UTF-8)</option>
+                    <option value="base64">base64</option>
+                    <option value="hex">hex</option>
+                </select>
+            </div>
+            <div class="form-row" style="align-items:flex-start">
+                <label class="form-label" style="padding-top:8px">输　入</label>
+                <textarea class="form-control" id="tool-input" placeholder="待处理串"></textarea>
+            </div>
+            <div class="form-row"><label class="form-label"></label>
+                <button class="btn btn-primary" id="btn-tool-run">运 行</button>
+            </div>
+            <div id="tool-result" class="preview-box" style="display:none"></div>
+        </div>
+
+    </div><!-- .card -->
+</div><!-- .page-wrapper -->
+
+<script>
+(function () {
+    'use strict';
+
+    /* ── Toast ─────────────────────────────────────────── */
+    function toast(msg, type) {
+        var container = document.getElementById('toast-container');
+        var el = document.createElement('div');
+        el.className = 'toast ' + (type || 'info');
+        el.textContent = msg;
+        container.appendChild(el);
+        setTimeout(function () {
+            el.style.transition = 'opacity .3s';
+            el.style.opacity = '0';
+            setTimeout(function () { container.removeChild(el); }, 300);
+        }, 3500);
+    }
+
+    /* ── Tabs ──────────────────────────────────────────── */
+    var tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var target = btn.dataset.tab;
+            tabBtns.forEach(function (b) { b.classList.remove('active'); });
+            document.querySelectorAll('.tab-pane').forEach(function (p) { p.classList.remove('active'); });
+            btn.classList.add('active');
+            document.getElementById('tab-' + target).classList.add('active');
+        });
+    });
+
+    /* ── Button loading state ──────────────────────────── */
+    function setLoading(btn, loading) {
+        if (loading) {
+            btn.disabled = true;
+            btn._originalText = btn.textContent;
+            btn.innerHTML = '<span class="spinner"></span> 处理中…';
+        } else {
+            btn.disabled = false;
+            btn.textContent = btn._originalText || '提　交';
+        }
+    }
+
+    /* ── Trigger download ──────────────────────────────── */
+    function triggerDownload(url) {
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    /* ── Collect form data as plain object ─────────────── */
+    function formToObject(form) {
+        var data = {};
+        new FormData(form).forEach(function (val, key) {
+            data[key] = val;
+        });
+        // certValidMonth must be a number
+        if (data.certValidMonth !== undefined) {
+            data.certValidMonth = parseInt(data.certValidMonth, 10);
+        }
+        return data;
+    }
+
+    /* ── POST JSON → handle response ───────────────────── */
+    function postJson(url, payload, btn, onSuccess) {
+        setLoading(btn, true);
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+            if (result.success) {
+                toast('签发成功，正在下载…', 'success');
+                onSuccess(result);
+            } else {
+                toast(result.msg || '操作失败', 'error');
+            }
+        })
+        .catch(function (err) {
+            toast('请求失败：' + err.message, 'error');
+        })
+        .finally(function () {
+            setLoading(btn, false);
+        });
+    }
+
+    function filenameFromDisposition(disposition, fallbackName) {
+        if (!disposition) return fallbackName;
+        var match = /filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i.exec(disposition);
+        var filename = match && (match[1] || match[2]);
+        if (!filename) return fallbackName;
+        try { return decodeURIComponent(filename); } catch (e) { return filename; }
+    }
+
+    function postJsonDownload(url, payload, btn, fallbackName) {
+        setLoading(btn, true);
+        fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(function (res) {
+            if (!res.ok) {
+                return res.text().then(function (text) {
+                    throw new Error(text || ('HTTP ' + res.status));
+                });
+            }
+            var filename = filenameFromDisposition(res.headers.get('Content-Disposition'), fallbackName);
+            return res.blob().then(function (blob) { return { blob: blob, filename: filename }; });
+        })
+        .then(function (download) {
+            var objectUrl = URL.createObjectURL(download.blob);
+            var a = document.createElement('a');
+            a.href = objectUrl;
+            a.download = download.filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(objectUrl);
+            toast('CSR 生成成功，正在下载…', 'success');
+        })
+        .catch(function (err) {
+            toast('请求失败：' + err.message, 'error');
+        })
+        .finally(function () {
+            setLoading(btn, false);
+        });
+    }
+
+    /* ── POST FormData (file upload) ───────────────────── */
+    function postFormData(url, formData, btn, onSuccess) {
+        setLoading(btn, true);
+        fetch(url, { method: 'POST', body: formData })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+            if (result.success) {
+                toast('签发成功，正在下载…', 'success');
+                onSuccess(result);
+            } else {
+                toast(result.msg || '操作失败', 'error');
+            }
+        })
+        .catch(function (err) {
+            toast('请求失败：' + err.message, 'error');
+        })
+        .finally(function () {
+            setLoading(btn, false);
+        });
+    }
+
+    /* ════════════════════════════════════════════════════
+       Tab 1 — SM2 直接生成 P12
+    ════════════════════════════════════════════════════ */
+    document.getElementById('form-sm2-p12').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn  = document.getElementById('btn-sm2-p12');
+        var data = formToObject(this);
+        postJson('/api/v2/cert/cert-issue', data, btn, function () {
+            triggerDownload('/api/v2/cert/download-cert/' + encodeURIComponent(data.dn_cn));
+        });
+    });
+
+    document.getElementById('form-csr-generate').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('btn-csr-generate');
+        var data = formToObject(this);
+        var filename = (data.dn_cn || 'csr') + '.csr.zip';
+        postJsonDownload('/api/v2/cert/csr/generate', data, btn, filename);
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 2 — SM2 P10 文件上传
+    ════════════════════════════════════════════════════ */
+    (function () {
+        var area   = document.getElementById('upload-sm2-p10f-area');
+        var input  = document.getElementById('upload-sm2-p10f-input');
+        var nameEl = document.getElementById('upload-sm2-p10f-name');
+        var btn    = document.getElementById('btn-sm2-p10f');
+        var file   = null;
+
+        function setFile(f) {
+            file = f;
+            nameEl.textContent = f ? '已选择：' + f.name : '';
+            btn.disabled = !f;
+        }
+
+        input.addEventListener('change', function () { setFile(this.files[0] || null); });
+
+        area.addEventListener('dragover', function (e) {
+            e.preventDefault();
+            area.classList.add('drag-over');
+        });
+        area.addEventListener('dragleave', function () { area.classList.remove('drag-over'); });
+        area.addEventListener('drop', function (e) {
+            e.preventDefault();
+            area.classList.remove('drag-over');
+            setFile(e.dataTransfer.files[0] || null);
+        });
+
+        btn.addEventListener('click', function () {
+            if (!file) { toast('请先选择 P10 文件', 'error'); return; }
+            var fd = new FormData();
+            fd.append('file', file);
+            postFormData('/api/v2/cert/p10Upload', fd, btn, function (result) {
+                triggerDownload('/api/v2/cert/download-cert/' + encodeURIComponent(result.data));
+                setFile(null);
+            });
+        });
+    })();
+
+    /* ════════════════════════════════════════════════════
+       Tab 3 — SM2 P10 文本
+    ════════════════════════════════════════════════════ */
+    document.getElementById('form-sm2-p10s').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn  = document.getElementById('btn-sm2-p10s');
+        var data = formToObject(this);
+        postJson('/api/v2/cert/p10PemStr', data, btn, function (result) {
+            triggerDownload('/api/v2/cert/download-cert/' + encodeURIComponent(result.data));
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 4 — RSA 直接生成 P12
+    ════════════════════════════════════════════════════ */
+    document.getElementById('form-rsa-p12').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn  = document.getElementById('btn-rsa-p12');
+        var data = formToObject(this);
+        postJson('/api/v2/cert/rsa-cert-issue', data, btn, function () {
+            triggerDownload('/api/v2/cert/download-rsa-cert/' + encodeURIComponent(data.dn_cn));
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 5 — RSA P10 文本
+    ════════════════════════════════════════════════════ */
+    document.getElementById('form-rsa-p10s').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn  = document.getElementById('btn-rsa-p10s');
+        var data = formToObject(this);
+        postJson('/api/v2/cert/rsa-p10PemStr', data, btn, function (result) {
+            triggerDownload('/api/v2/cert/download-rsa-cert/' + encodeURIComponent(result.data));
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 6 — ECC 直接生成 P12
+    ════════════════════════════════════════════════════ */
+    document.getElementById('form-ecc-p12').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn   = document.getElementById('btn-ecc-p12');
+        var data  = formToObject(this);
+        var curve = data.eccCurve || 'prime256v1';
+        postJson('/api/v2/cert/ecc-cert-issue/' + curve, data, btn, function () {
+            triggerDownload('/api/v2/cert/download-ecc-cert/' + curve + '/' + encodeURIComponent(data.dn_cn));
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 7 — ECC P10 文本
+    ════════════════════════════════════════════════════ */
+    document.getElementById('form-ecc-p10s').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn   = document.getElementById('btn-ecc-p10s');
+        var data  = formToObject(this);
+        var curve = data.eccCurve || 'prime256v1';
+        postJson('/api/v2/cert/ecc-p10PemStr/' + curve, data, btn, function (result) {
+            triggerDownload('/api/v2/cert/download-ecc-cert/' + curve + '/' + encodeURIComponent(result.data));
+        });
+    });
+
+    /* ── Helpers shared by Unified / CSR Sign ─────────── */
+    function collectChecked(form, prefix) {
+        var arr = [];
+        form.querySelectorAll('input[type=checkbox][name^="' + prefix + '"]').forEach(function (cb) {
+            if (cb.checked) arr.push(cb.name.substring(prefix.length));
+        });
+        return arr;
+    }
+    function collectOutputFormats(form) {
+        return collectChecked(form, 'of_');
+    }
+    function parseSans(str) {
+        if (!str) return [];
+        return str.split(',').map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; });
+    }
+    function postRaw(url, body, contentType, btn, onResult) {
+        setLoading(btn, true);
+        fetch(url, { method: 'POST', headers: { 'Content-Type': contentType }, body: body })
+            .then(function (r) { return r.json(); })
+            .then(function (result) {
+                if (result.success) onResult(result);
+                else toast(result.msg || '操作失败', 'error');
+            })
+            .catch(function (err) { toast('请求失败：' + err.message, 'error'); })
+            .finally(function () { setLoading(btn, false); });
+    }
+
+    /* ════════════════════════════════════════════════════
+       Tab 0 — T04 统一签发
+    ════════════════════════════════════════════════════ */
+    var unifiedAlgo = document.getElementById('unified-algo');
+    var unifiedCurveRow = document.getElementById('unified-curve-row');
+    unifiedAlgo.addEventListener('change', function () {
+        unifiedCurveRow.style.display = unifiedAlgo.value === 'ECC' ? 'flex' : 'none';
+    });
+
+    document.getElementById('form-unified').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var form = this;
+        var btn  = document.getElementById('btn-unified');
+        var f    = formToObject(form);
+        var algo = f.algorithm || 'SM2';
+        var curve = f.curve || 'prime256v1';
+
+        var payload = {
+            certValidMonth: f.certValidMonth ? parseInt(f.certValidMonth, 10) : null,
+            dn_c: f.dn_c, dn_st: f.dn_st, dn_l: f.dn_l,
+            dn_o: f.dn_o, dn_ou: f.dn_ou, dn_cn: f.dn_cn, dn_email: f.dn_email,
+            algorithm: algo,
+            certUsage: f.certUsage || null,
+            caId: f.caId || null,
+            signatureAlg: f.signatureAlg || null,
+            digestAlg: f.digestAlg || null,
+            outputFormats: collectOutputFormats(form),
+            keyUsages: collectChecked(form, 'ku_'),
+            extendedKeyUsages: collectChecked(form, 'eku_'),
+            subjectAltNames: parseSans(f.sans),
+            basicConstraintsCA: form.querySelector('input[name=basicConstraintsCA]').checked ? true : null
+        };
+
+        var qs = 'algorithm=' + encodeURIComponent(algo);
+        if (algo === 'ECC') qs += '&curve=' + encodeURIComponent(curve);
+
+        postJson('/api/v2/cert/issue?' + qs, payload, btn, function (result) {
+            var cn = result.data;
+            var path = '/api/v2/cert/download/' + algo + '/' + encodeURIComponent(cn);
+            if (algo === 'ECC') path += '?curve=' + encodeURIComponent(curve);
+            triggerDownload(path);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 8 — T05 CSR 解析
+    ════════════════════════════════════════════════════ */
+    document.getElementById('btn-csr-parse').addEventListener('click', function () {
+        var btn = this;
+        var csr = document.getElementById('csrParseInput').value;
+        if (!csr || !csr.trim()) { toast('请输入 CSR', 'error'); return; }
+        postRaw('/api/v2/cert/csr/parse', csr, 'text/plain', btn, function (result) {
+            var box = document.getElementById('csrParseResult');
+            box.style.display = 'block';
+            box.textContent = JSON.stringify(result.data, null, 2);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 9 — T06 CSR 两步签发
+    ════════════════════════════════════════════════════ */
+    var csrSignAlgo = document.getElementById('csrsign-algo');
+    var csrSignCurveRow = document.getElementById('csrsign-curve-row');
+    csrSignAlgo.addEventListener('change', function () {
+        csrSignCurveRow.style.display = csrSignAlgo.value === 'ECC' ? 'flex' : 'none';
+    });
+
+    function buildCsrSignPayload(form) {
+        var f = formToObject(form);
+        return {
+            csrContent: f.csrContent,
+            algorithm: f.algorithm || null,
+            curve: f.curve || null,
+            certValidMonth: f.certValidMonth ? parseInt(f.certValidMonth, 10) : null,
+            keyUsages: collectChecked(form, 'csku_'),
+            extendedKeyUsages: collectChecked(form, 'cseku_'),
+            subjectAltNames: parseSans(f.sans),
+            basicConstraintsCA: form.querySelector('input[name=basicConstraintsCA]').checked ? true : null
+        };
+    }
+
+    document.getElementById('btn-csr-preview').addEventListener('click', function () {
+        var btn = this;
+        var form = document.getElementById('form-csr-sign');
+        var payload = buildCsrSignPayload(form);
+        if (!payload.csrContent) { toast('请输入 CSR', 'error'); return; }
+        postJson('/api/v2/cert/csr/preview', payload, btn, function (result) {
+            var box = document.getElementById('csrPreviewBox');
+            box.style.display = 'block';
+            box.textContent = JSON.stringify(result.data, null, 2);
+        });
+    });
+
+    document.getElementById('form-csr-sign').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('btn-csr-sign');
+        var payload = buildCsrSignPayload(this);
+        postJson('/api/v2/cert/csr/sign', payload, btn, function (result) {
+            var cn = result.data;
+            var algo = payload.algorithm || 'SM2';
+            var path = '/api/v2/cert/download/' + algo + '/' + encodeURIComponent(cn);
+            if (algo === 'ECC') path += '?curve=' + encodeURIComponent(payload.curve || 'prime256v1');
+            triggerDownload(path);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Iteration 2/4/5 — Shared helpers
+    ════════════════════════════════════════════════════ */
+    var adminTokenInput = document.getElementById('admin-token');
+    function adminHeaders() {
+        var h = { 'Content-Type': 'application/json' };
+        var tok = adminTokenInput && adminTokenInput.value ? adminTokenInput.value : '';
+        if (tok) h['X-Admin-Token'] = tok;
+        return h;
+    }
+
+    function showJson(elId, obj) {
+        var box = document.getElementById(elId);
+        box.style.display = 'block';
+        box.textContent = (typeof obj === 'string') ? obj : JSON.stringify(obj, null, 2);
+    }
+
+    function fetchJson(url, init, btn, onResult) {
+        setLoading(btn, true);
+        fetch(url, init)
+            .then(function (r) { return r.json().then(function (j) { return { status: r.status, body: j }; }); })
+            .then(function (pkg) {
+                var result = pkg.body;
+                if (result && result.success) onResult(result);
+                else toast((result && result.msg) || ('HTTP ' + pkg.status), 'error');
+            })
+            .catch(function (err) { toast('请求失败：' + err.message, 'error'); })
+            .finally(function () { setLoading(btn, false); });
+    }
+
+    /* ════════════════════════════════════════════════════
+       Tab 10 — CA 管理 (T07-T11)
+    ════════════════════════════════════════════════════ */
+    function renderCaList(arr) {
+        if (!arr || !arr.length) { showJson('ca-list', '（无 CA）'); return; }
+        var lines = arr.map(function (c) {
+            return '[' + (c.builtin ? '内置' : '自建') + '] ' + c.caId
+                + '  algo=' + c.algorithm + (c.curve ? '/' + c.curve : '')
+                + '  CN=' + (c.subjectCn || '?')
+                + (c.builtin ? '' : '  [DEL]');
+        }).join('\n');
+        showJson('ca-list', lines);
+
+        // 同步到「统一签发」下的 caId 下拉
+        var sel = document.getElementById('unified-caId');
+        if (sel) {
+            var prev = sel.value;
+            sel.innerHTML = '<option value="">默认内置 CA（按算法）</option>';
+            arr.forEach(function (c) {
+                var opt = document.createElement('option');
+                opt.value = c.caId;
+                opt.textContent = c.caId + ' (' + c.algorithm + (c.curve ? '/' + c.curve : '') + ')';
+                sel.appendChild(opt);
+            });
+            sel.value = prev;
+        }
+    }
+
+    document.getElementById('btn-ca-refresh').addEventListener('click', function () {
+        var btn = this;
+        fetchJson('/api/v2/ca/list', { headers: adminHeaders() }, btn, function (result) {
+            renderCaList(result.data);
+        });
+    });
+
+    document.getElementById('form-ca-upload').addEventListener('submit', function (e) {
+        e.preventDefault();
+        var btn = document.getElementById('btn-ca-upload');
+        var f = formToObject(this);
+        var payload = {
+            name: f.name,
+            p12Base64: f.p12Base64 || undefined,
+            p12Password: f.p12Password || undefined,
+            certPem: f.certPem || undefined,
+            privateKeyPem: f.privateKeyPem || undefined,
+            curve: f.curve || undefined
+        };
+        fetchJson('/api/v2/ca/upload', {
+            method: 'POST', headers: adminHeaders(), body: JSON.stringify(payload)
+        }, btn, function (result) {
+            toast('CA 上传成功: ' + result.data.caId, 'success');
+            document.getElementById('btn-ca-refresh').click();
+        });
+    });
+
+    // 点击列表中包含 [DEL] 的行执行删除
+    document.getElementById('ca-list').addEventListener('click', function (e) {
+        // 简化处理：弹窗输入 caId
+        var caId = prompt('要删除的 caId（仅自建 CA）：');
+        if (!caId) return;
+        if (!confirm('确认删除 ' + caId + ' ？')) return;
+        fetchJson('/api/v2/ca/' + encodeURIComponent(caId),
+            { method: 'DELETE', headers: adminHeaders() },
+            document.getElementById('btn-ca-refresh'),
+            function () { toast('删除成功', 'success'); document.getElementById('btn-ca-refresh').click(); });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 11 — 数字信封 (T17-T20)
+    ════════════════════════════════════════════════════ */
+    function toBase64Utf8(s) {
+        try { return btoa(unescape(encodeURIComponent(s))); }
+        catch (e) { toast('明文编码失败: ' + e.message, 'error'); throw e; }
+    }
+
+    document.getElementById('env-op').addEventListener('change', function () {
+        ['encrypt', 'decrypt', 'parse'].forEach(function (op) {
+            document.getElementById('env-' + op + '-pane').style.display =
+                (this.value === op) ? 'block' : 'none';
+        }.bind(this));
+        document.getElementById('env-result').style.display = 'none';
+    });
+
+    document.getElementById('btn-env-encrypt').addEventListener('click', function () {
+        var btn = this;
+        var plain = document.getElementById('env-plain').value;
+        var enc   = document.getElementById('env-plain-encoding').value;
+        var cert  = document.getElementById('env-cert').value;
+        if (!plain || !cert) { toast('明文与证书均不能为空', 'error'); return; }
+        var b64 = (enc === 'base64') ? plain.trim() : toBase64Utf8(plain);
+        fetchJson('/api/v2/envelope/encrypt', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ plainBase64: b64, recipientCert: cert })
+        }, btn, function (result) {
+            showJson('env-result', '信封 base64:\n' + result.data);
+        });
+    });
+
+    document.getElementById('btn-env-decrypt').addEventListener('click', function () {
+        var btn = this;
+        var payload = {
+            envelopeBase64: document.getElementById('env-envelope').value.trim(),
+            p12Base64:      document.getElementById('env-p12').value.trim() || undefined,
+            p12Password:    document.getElementById('env-p12pwd').value || undefined,
+            privateKeyPem:  document.getElementById('env-priv').value || undefined,
+            ownerCertPem:   document.getElementById('env-owner').value || undefined
+        };
+        if (!payload.envelopeBase64) { toast('信封 base64 不能为空', 'error'); return; }
+        fetchJson('/api/v2/envelope/decrypt', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }, btn, function (result) {
+            var plain;
+            try { plain = decodeURIComponent(escape(atob(result.data))); }
+            catch (e) { plain = '(非 UTF-8) base64=' + result.data; }
+            showJson('env-result', '明文:\n' + plain);
+        });
+    });
+
+    document.getElementById('btn-env-parse').addEventListener('click', function () {
+        var btn = this;
+        var body = document.getElementById('env-parse-input').value.trim();
+        if (!body) { toast('信封 base64 不能为空', 'error'); return; }
+        fetchJson('/api/v2/envelope/parse', {
+            method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: body
+        }, btn, function (result) {
+            showJson('env-result', result.data);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 12 — 证书解析 (T22)
+    ════════════════════════════════════════════════════ */
+    document.getElementById('btn-cert-parse').addEventListener('click', function () {
+        var btn = this;
+        var input = document.getElementById('cert-parse-input').value.trim();
+        if (!input) { toast('请输入证书', 'error'); return; }
+        fetchJson('/api/v2/inspect/cert', {
+            method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: input
+        }, btn, function (result) {
+            showJson('cert-parse-result', result.data);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 13 — 密钥检查 (T24)
+    ════════════════════════════════════════════════════ */
+    document.getElementById('btn-key-inspect').addEventListener('click', function () {
+        var btn = this;
+        var payload = {
+            privateKeyPem: document.getElementById('key-priv').value,
+            password: document.getElementById('key-pwd').value || undefined,
+            certPemOrBase64: document.getElementById('key-cert').value || undefined
+        };
+        if (!payload.privateKeyPem) { toast('请输入私钥 PEM', 'error'); return; }
+        fetchJson('/api/v2/inspect/key', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }, btn, function (result) {
+            showJson('key-inspect-result', result.data);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 14 — 证书链 (T25)
+    ════════════════════════════════════════════════════ */
+    function splitPemBlocks(text) {
+        if (!text || !text.trim()) return [];
+        var t = text.trim();
+        if (t.indexOf('-----BEGIN') === -1) {
+            // base64 — 每行视为一张证书
+            return t.split(/\n+/).map(function (s) { return s.trim(); }).filter(Boolean);
+        }
+        // PEM — 按 -----BEGIN 切分
+        var blocks = [];
+        var re = /-----BEGIN [^-]+-----[\s\S]*?-----END [^-]+-----/g;
+        var m;
+        while ((m = re.exec(t)) !== null) blocks.push(m[0]);
+        return blocks;
+    }
+
+    document.getElementById('btn-chain-inspect').addEventListener('click', function () {
+        var btn = this;
+        var chain = splitPemBlocks(document.getElementById('chain-input').value);
+        var anchors = splitPemBlocks(document.getElementById('chain-anchors').value);
+        if (!chain.length) { toast('证书链不能为空', 'error'); return; }
+        fetchJson('/api/v2/inspect/chain', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chain: chain, trustAnchors: anchors.length ? anchors : null })
+        }, btn, function (result) {
+            showJson('chain-result', result.data);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 15 — CRL (T26-T27)
+    ════════════════════════════════════════════════════ */
+    document.getElementById('crl-op').addEventListener('change', function () {
+        document.getElementById('crl-generate-pane').style.display = this.value === 'generate' ? 'block' : 'none';
+        document.getElementById('crl-parse-pane').style.display    = this.value === 'parse'    ? 'block' : 'none';
+        document.getElementById('crl-result').style.display = 'none';
+    });
+
+    document.getElementById('btn-crl-generate').addEventListener('click', function () {
+        var btn = this;
+        var caId = document.getElementById('crl-caId').value.trim() || undefined;
+        var validDays = parseInt(document.getElementById('crl-validDays').value, 10) || 30;
+        var raw = document.getElementById('crl-entries').value.trim();
+        var revoked;
+        try { revoked = JSON.parse(raw); }
+        catch (e) { toast('revoked 不是合法 JSON', 'error'); return; }
+        fetchJson('/api/v2/crl/generate', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ caId: caId, validDays: validDays, revoked: revoked })
+        }, btn, function (result) {
+            showJson('crl-result', 'CRL base64:\n' + result.data);
+        });
+    });
+
+    document.getElementById('btn-crl-parse').addEventListener('click', function () {
+        var btn = this;
+        var body = document.getElementById('crl-parse-input').value.trim();
+        if (!body) { toast('CRL base64 不能为空', 'error'); return; }
+        fetchJson('/api/v2/inspect/crl', {
+            method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: body
+        }, btn, function (result) {
+            showJson('crl-result', result.data);
+        });
+    });
+
+    /* ════════════════════════════════════════════════════
+       Tab 16 — 编解码 (T28)
+    ════════════════════════════════════════════════════ */
+    document.getElementById('tool-type').addEventListener('change', function () {
+        var asn1 = this.value === 'asn1';
+        document.getElementById('tool-op-row').style.display = asn1 ? 'none' : 'flex';
+        document.getElementById('tool-enc-row').style.display = asn1 ? 'none' : 'flex';
+        document.getElementById('tool-result').style.display = 'none';
+    });
+
+    document.getElementById('btn-tool-run').addEventListener('click', function () {
+        var btn = this;
+        var type = document.getElementById('tool-type').value;
+        var input = document.getElementById('tool-input').value;
+        if (!input) { toast('输入不能为空', 'error'); return; }
+        if (type === 'asn1') {
+            fetchJson('/api/v2/tools/asn1', {
+                method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: input
+            }, btn, function (result) { showJson('tool-result', result.data); });
+            return;
+        }
+        var payload = {
+            operation: document.getElementById('tool-op').value,
+            input: input,
+            inputEncoding: document.getElementById('tool-input-encoding').value
+        };
+        fetchJson('/api/v2/tools/' + type, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }, btn, function (result) { showJson('tool-result', result.data); });
+    });
+
+    /* ── 启动期：尝试加载 CA 列表（如果配了 token 就成功；否则保持空） ── */
+    setTimeout(function () {
+        if (adminTokenInput && adminTokenInput.value) {
+            document.getElementById('btn-ca-refresh').click();
+        }
+    }, 100);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- 日志存放路径（可通过 application.yml 的 logging.file.path 覆盖） -->
+    <springProperty name="log.path" scope="context" source="logging.file.path" defaultValue="/home/jca/logs"/>
+
+    <!-- ── 格式定义 ──────────────────────────────────────────────────────── -->
+    <!-- 通用格式：���间 线程 级别 traceId 类名 方法 行号 消息 -->
+    <property name="log.pattern"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level traceId:%X{traceId} %logger{30} - [%method,%line] - %msg%n"/>
+    <!-- SQL 专用格式：与通用格式一致，保留 traceId 关联 -->
+    <property name="sql.pattern"
+              value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level traceId:%X{traceId} %logger{50} - [%method,%line] - %msg%n"/>
+
+    <!-- ── 控制台 ─────────────────────────────────────────────────────────── -->
+    <appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ── 普通日志（INFO+，对应控制台全量输出） ──────────────────────────── -->
+    <appender name="file_info" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/sys-info.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/sys-info.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <!-- ThresholdFilter：INFO 及以上全部写入（INFO / WARN / ERROR） -->
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+
+    <!-- ── 错误日志（仅 ERROR 级别） ──────────────────────────────────────── -->
+    <appender name="file_error" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/sys-error.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/sys-error.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>60</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${log.pattern}</pattern>
+        </encoder>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <!-- ── 管理库 SQL 日志 ────────────────────────────────────────────────── -->
+    <!--
+        MyBatis-Plus Slf4jImpl 使用 Mapper 接口全类名作为 logger 名称：
+          com.osr.tech.tde.mapper.TaskGroupMapper.selectById
+          com.osr.tech.tde.dao.XxxMapper.update
+        因此 logger 必须指向 mapper/dao 包，而不是 repo 包（repo 是 ServiceImpl 层）。
+        需同步确认 application.yml 已改为：log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
+    -->
+    <appender name="file_sql_admin" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/sql-admin.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/sql-admin.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${sql.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ── 被管库 SQL 日志 ────────────────────────────────────────────────── -->
+    <!--
+        被管库 SQL 来源于两个路径：
+        1. RelationalManagedDbExecutor（DML：fetchBatch / batchUpdate / execute）
+           → 由该类 @Slf4j logger 在 INFO 级别显式记录，包含 instanceId + SQL + 行数
+        2. ColumnTaskService 直接调用 JdbcTemplate（DDL：DROP/ADD COLUMN）
+           → Spring JDBC JdbcTemplate 在 DEBUG 级别记录，logger 为
+             org.springframework.jdbc.core.JdbcTemplate
+        两者都路由到此文件，additivity=true 同时冒泡至 root（console + sys-info）。
+    -->
+    <appender name="file_sql_managed" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${log.path}/sql-managed.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${log.path}/sql-managed.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>${sql.pattern}</pattern>
+        </encoder>
+    </appender>
+
+    <!-- ── Logger 配置 ────────────────────────────────────────────────────── -->
+
+    <!--
+        管理库 SQL（MyBatis-Plus Slf4jImpl）
+        logger 名 = Mapper 接口全类名，必须覆盖 mapper 和 dao 两个扫描包。
+        additivity=true（默认）→ 冒泡到 root → console / sys-info / sys-error
+    -->
+    <logger name="com.osr.tech.tde.mapper" level="DEBUG">
+        <appender-ref ref="file_sql_admin"/>
+    </logger>
+    <logger name="com.osr.tech.tde.dao" level="DEBUG">
+        <appender-ref ref="file_sql_admin"/>
+    </logger>
+
+    <!--
+        被管库 DML SQL（RelationalManagedDbExecutor）
+        fetchBatch / batchUpdate / execute 均在 INFO 级别显式记录 SQL + instanceId。
+        additivity=true → 冒泡到 root → console / sys-info
+    -->
+    <logger name="com.osr.tech.tde.managed.RelationalManagedDbExecutor" level="INFO">
+        <appender-ref ref="file_sql_managed"/>
+    </logger>
+
+    <!--
+        被管库 DDL SQL（ColumnTaskService 直接调用 JdbcTemplate）
+        ColumnTaskService 的 dropColumn / addColumn 通过 managedDbExecutorFactory.getJdbcTemplate()
+        直接操作被管库 JdbcTemplate，Spring JDBC 在 DEBUG 级别记录实际执行的 DDL SQL。
+        由于管理库走 MyBatis-Plus（不经 JdbcTemplate），此 logger 实际只捕获被管库 DDL。
+        additivity=true → 冒泡到 root → console / sys-info
+    -->
+    <logger name="org.springframework.jdbc.core.JdbcTemplate" level="DEBUG">
+        <appender-ref ref="file_sql_managed"/>
+    </logger>
+
+    <!-- 业务代码整体 INFO -->
+    <logger name="com.osr" level="INFO"/>
+    <!-- Spring 框架只记录 WARN 及以上（JdbcTemplate 单独覆盖，见上方） -->
+    <logger name="org.springframework" level="WARN"/>
+    <!-- MyBatis-Plus 框架内部静默，避免 DEBUG 污染（mapper/dao 已单独覆盖） -->
+    <logger name="com.baomidou" level="WARN"/>
+
+    <!-- ── Root：所有日志写入控制台 + 普通日志文件 + 错误日志文件 ──────────── -->
+    <root level="INFO">
+        <appender-ref ref="console"/>
+        <appender-ref ref="file_info"/>
+        <appender-ref ref="file_error"/>
+    </root>
+
+</configuration>
