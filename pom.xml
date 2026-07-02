@@ -8,10 +8,32 @@
     <artifactId>gm-pki-ca</artifactId>
     <version>1.0.0</version>
     <name>gm-pki-ca</name>
+    <url>https://github.com/open-gm-jca/gm-pki-ca</url>
 
     <description>
         国密JAVA CA
     </description>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>open-gm-jca</id>
+            <name>open-gm-jca contributors</name>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/open-gm-jca/gm-pki-ca.git</connection>
+        <developerConnection>scm:git:https://github.com/open-gm-jca/gm-pki-ca.git</developerConnection>
+        <url>https://github.com/open-gm-jca/gm-pki-ca</url>
+    </scm>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -107,12 +129,6 @@
             <version>2.0.8</version>
         </dependency>
 
-        <!-- 应用监控 -->
-        <dependency>
-            <groupId>net.bull.javamelody</groupId>
-            <artifactId>javamelody-spring-boot-starter</artifactId>
-            <version>1.87.0</version>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>

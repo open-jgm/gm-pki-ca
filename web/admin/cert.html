@@ -115,11 +115,11 @@
                         </div>
                         <div class="layui-form-item">
                             <label class="layui-form-label">省市:</label>
-                            <div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div>
+                            <div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="DEMO"/></div>
                         </div>
                         <div class="layui-form-item">
                             <label class="layui-form-label">市县:</label>
-                            <div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div>
+                            <div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="DEMO"/></div>
                         </div>
                         <div class="layui-form-item">
                             <label class="layui-form-label">单位:</label>
@@ -178,7 +178,7 @@
                             </div>
                         </div>
 
-                        <label class="layui-form-label-col" style="color: #ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color: #ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item">
                             <button type="button" id="unifiedBtn" class="pear-btn pear-btn-success" lay-submit lay-filter="unifiedSubmit">提 交</button>
                         </div>
@@ -191,14 +191,14 @@
                         <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">SM2 Certificate Issue</div></div>
                         <div class="layui-form-item"><label class="layui-form-label">生效月数:</label><div class="layui-input-block"><input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">国家:</label><div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div></div>
-                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div></div>
-                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="DEMO"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="DEMO"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">地址:</label><div class="layui-input-block"><input name="dn_street" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">单位:</label><div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">部门:</label><div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">名称:</label><div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">邮箱:</label><div class="layui-input-block"><input name="dn_email" class="layui-input"/></div></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" id="sm2Button" class="pear-btn pear-btn-success" lay-submit lay-filter="sm2Submit">提 交</button></div>
                     </form>
                 </div>
@@ -207,7 +207,7 @@
                 <div class="layui-tab-item">
                     <form class="layui-form" id="csr-file-table" lay-filter="csr-file-signing" action="javascript:void(0);">
                         <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">SM2 P10 File Issue</div></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" class="layui-btn" id="upload1"><i class="layui-icon"></i>上传 P10 文件</button></div>
                     </form>
                 </div>
@@ -217,7 +217,7 @@
                     <form class="layui-form" id="csr-content-table" lay-filter="csr-content-signing" action="javascript:void(0);">
                         <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">SM2 P10 String Issue</div></div>
                         <div class="layui-form-item"><textarea name="p10PemStr" placeholder="请输入 p10.pem 文件内容" class="layui-textarea" style="width:100%;height:555px"></textarea></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" id="csrContentButton" class="pear-btn pear-btn-success login" lay-submit lay-filter="csrContentButton">提 交</button></div>
                     </form>
                 </div>
@@ -228,13 +228,13 @@
                         <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">RSA Certificate Issue</div></div>
                         <div class="layui-form-item"><label class="layui-form-label">生效月数:</label><div class="layui-input-block"><input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">国家:</label><div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div></div>
-                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div></div>
-                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="DEMO"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="DEMO"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">单位:</label><div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">部门:</label><div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">名称:</label><div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">邮箱:</label><div class="layui-input-block"><input name="dn_email" class="layui-input"/></div></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" id="rsaButton" class="pear-btn pear-btn-success" lay-submit lay-filter="rsaSubmit">提 交</button></div>
                     </form>
                 </div>
@@ -244,7 +244,7 @@
                     <form class="layui-form" id="rsa-p10-text-table" lay-filter="rsa-p10-text" action="javascript:void(0);">
                         <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">RSA P10 String Issue</div></div>
                         <div class="layui-form-item"><textarea name="p10PemStr" placeholder="请输入 p10.pem 文件内容" class="layui-textarea" style="width:100%;height:555px"></textarea></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" id="rsaP10TextButton" class="pear-btn pear-btn-success login" lay-submit lay-filter="rsaP10TextButton">提 交</button></div>
                     </form>
                 </div>
@@ -256,13 +256,13 @@
                         <div class="layui-form-item"><label class="layui-form-label">曲线:</label><div class="layui-input-block"><select name="eccCurve"><option value="prime256v1" selected>prime256v1</option><option value="brainpoolP256r1">brainpoolP256r1</option><option value="FRP256v1">FRP256v1</option></select></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">生效月数:</label><div class="layui-input-block"><input name="certValidMonth" lay-verify="number" class="layui-input" value="240"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">国家:</label><div class="layui-input-block"><input name="dn_c" lay-verify="required" class="layui-input" value="CN"/></div></div>
-                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="hunan"/></div></div>
-                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="changsha"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">省市:</label><div class="layui-input-block"><input name="dn_st" lay-verify="required" class="layui-input" value="DEMO"/></div></div>
+                        <div class="layui-form-item"><label class="layui-form-label">市县:</label><div class="layui-input-block"><input name="dn_l" lay-verify="required" class="layui-input" value="DEMO"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">单位:</label><div class="layui-input-block"><input name="dn_o" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">部门:</label><div class="layui-input-block"><input name="dn_ou" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">名称:</label><div class="layui-input-block"><input name="dn_cn" lay-verify="required" class="layui-input"/></div></div>
                         <div class="layui-form-item"><label class="layui-form-label">邮箱:</label><div class="layui-input-block"><input name="dn_email" class="layui-input"/></div></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" id="eccButton" class="pear-btn pear-btn-success" lay-submit lay-filter="eccSubmit">提 交</button></div>
                     </form>
                 </div>
@@ -273,7 +273,7 @@
                         <div class="layui-form-item"><img class="logo" src="admin/images/logo.png"/><div class="title">ECC P10 String Issue</div></div>
                         <div class="layui-form-item"><label class="layui-form-label">曲线:</label><div class="layui-input-block"><select name="eccCurve"><option value="prime256v1" selected>prime256v1</option><option value="brainpoolP256r1">brainpoolP256r1</option><option value="FRP256v1">FRP256v1</option></select></div></div>
                         <div class="layui-form-item"><textarea name="p10PemStr" placeholder="请输入 p10.pem 文件内容" class="layui-textarea" style="width:100%;height:555px"></textarea></div>
-                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令为字符串12345678</label>
+                        <label class="layui-form-label-col" style="color:#ff0000">注意：P12口令由服务端 CERT_P12_PASSWORD 配置</label>
                         <div class="layui-form-item"><button type="button" id="eccP10TextButton" class="pear-btn pear-btn-success login" lay-submit lay-filter="eccP10TextButton">提 交</button></div>
                     </form>
                 </div>

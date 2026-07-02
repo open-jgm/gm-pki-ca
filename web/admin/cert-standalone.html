@@ -341,6 +341,10 @@
         <h1>证书签发系统</h1>
     </div>
 
+    <div class="demo-warning">
+        安全提示：内置 RootCA/SubCA 仅为公开 DEMO 样例，不得作为生产信任锚或真实证书签发 CA。生产环境请启用 production profile 并上传自有 CA，同时配置 CERT_ADMIN_TOKEN、CERT_API_TOKEN 与 CERT_P12_PASSWORD。
+    </div>
+
     <!-- CA Download Bar -->
     <div class="ca-bar">
         <span>下载根证书：</span>
@@ -378,7 +382,7 @@
         <!-- ── Tab 0: T04 统一签发 ─────────────────────────── -->
         <div class="tab-pane active" id="tab-unified">
             <div class="pane-title">统一证书签发 <span class="badge">T01+T02+T04</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678；ECC 必须选择曲线；BOTH/ENC 仅 SM2 支持</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置；ECC 必须选择曲线；BOTH/ENC 仅 SM2 支持</div>
             <form id="form-unified" autocomplete="off">
                 <div class="form-row">
                     <label class="form-label">算　法</label>
@@ -433,8 +437,8 @@
                     <input class="form-control" name="certValidMonth" type="number" min="1" max="360" value="240">
                 </div>
                 <div class="form-row"><label class="form-label">国　家</label><input class="form-control" name="dn_c" value="CN" required></div>
-                <div class="form-row"><label class="form-label">省　市</label><input class="form-control" name="dn_st" value="hunan" required></div>
-                <div class="form-row"><label class="form-label">市　县</label><input class="form-control" name="dn_l" value="changsha" required></div>
+                <div class="form-row"><label class="form-label">省　市</label><input class="form-control" name="dn_st" value="DEMO" required></div>
+                <div class="form-row"><label class="form-label">市　县</label><input class="form-control" name="dn_l" value="DEMO" required></div>
                 <div class="form-row"><label class="form-label">单　位</label><input class="form-control" name="dn_o" required></div>
                 <div class="form-row"><label class="form-label">部　门</label><input class="form-control" name="dn_ou" required></div>
                 <div class="form-row"><label class="form-label">名　称</label><input class="form-control" name="dn_cn" required></div>
@@ -480,7 +484,7 @@
         <!-- ── Tab 1: SM2 直接生成 P12 ─────────────────────── -->
         <div class="tab-pane" id="tab-sm2-p12">
             <div class="pane-title">SM2 用户证书签发 <span class="badge">服务端生成密钥</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <form id="form-sm2-p12" autocomplete="off">
                 <div class="form-row">
                     <label class="form-label">生效月数</label>
@@ -492,11 +496,11 @@
                 </div>
                 <div class="form-row">
                     <label class="form-label">省　市</label>
-                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">市　县</label>
-                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">地　址</label>
@@ -536,11 +540,11 @@
                 </div>
                 <div class="form-row">
                     <label class="form-label">省　市</label>
-                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">市　县</label>
-                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">地　址</label>
@@ -572,7 +576,7 @@
         <!-- ── Tab 2: SM2 P10 文件 ───────────────────────── -->
         <div class="tab-pane" id="tab-sm2-p10f">
             <div class="pane-title">SM2 P10 文件上传 <span class="badge">CSR 签发</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <div class="upload-area" id="upload-sm2-p10f-area">
                 <input type="file" id="upload-sm2-p10f-input" accept=".pem,.p10,.csr,.cer,.txt">
                 <div class="upload-icon">📄</div>
@@ -586,7 +590,7 @@
         <!-- ── Tab 3: SM2 P10 文本 ───────────────────────── -->
         <div class="tab-pane" id="tab-sm2-p10s">
             <div class="pane-title">SM2 P10 文本签发 <span class="badge">CSR 签发</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <form id="form-sm2-p10s" autocomplete="off">
                 <div class="form-row" style="align-items:flex-start">
                     <label class="form-label" style="padding-top:8px">P10 内容</label>
@@ -602,7 +606,7 @@
         <!-- ── Tab 4: RSA 直接生成 P12 ─────────────────────── -->
         <div class="tab-pane" id="tab-rsa-p12">
             <div class="pane-title">RSA 用户证书签发 <span class="badge">服务端生成密钥</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <form id="form-rsa-p12" autocomplete="off">
                 <div class="form-row">
                     <label class="form-label">生效月数</label>
@@ -614,11 +618,11 @@
                 </div>
                 <div class="form-row">
                     <label class="form-label">省　市</label>
-                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">市　县</label>
-                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">地　址</label>
@@ -650,7 +654,7 @@
         <!-- ── Tab 5: RSA P10 文本 ───────────────────────── -->
         <div class="tab-pane" id="tab-rsa-p10s">
             <div class="pane-title">RSA P10 文本签发 <span class="badge">CSR 签发</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <form id="form-rsa-p10s" autocomplete="off">
                 <div class="form-row" style="align-items:flex-start">
                     <label class="form-label" style="padding-top:8px">P10 内容</label>
@@ -666,7 +670,7 @@
         <!-- ── Tab 6: ECC 直接生成 P12 ─────────────────────── -->
         <div class="tab-pane" id="tab-ecc-p12">
             <div class="pane-title">ECC 用户证书签发 <span class="badge">服务端生成密钥</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <form id="form-ecc-p12" autocomplete="off">
                 <div class="form-row">
                     <label class="form-label">曲　线</label>
@@ -686,11 +690,11 @@
                 </div>
                 <div class="form-row">
                     <label class="form-label">省　市</label>
-                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="hunan" required>
+                    <input class="form-control" name="dn_st" placeholder="DN_ST" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">市　县</label>
-                    <input class="form-control" name="dn_l" placeholder="DN_L" value="changsha" required>
+                    <input class="form-control" name="dn_l" placeholder="DN_L" value="DEMO" required>
                 </div>
                 <div class="form-row">
                     <label class="form-label">地　址</label>
@@ -722,7 +726,7 @@
         <!-- ── Tab 7: ECC P10 文本 ───────────────────────── -->
         <div class="tab-pane" id="tab-ecc-p10s">
             <div class="pane-title">ECC P10 文本签发 <span class="badge">CSR 签发</span></div>
-            <div class="form-hint">注意：P12 口令为字符串 12345678</div>
+            <div class="form-hint">注意：P12 口令由服务端 CERT_P12_PASSWORD 配置</div>
             <form id="form-ecc-p10s" autocomplete="off">
                 <div class="form-row">
                     <label class="form-label">曲　线</label>
@@ -764,7 +768,14 @@
             <form id="form-csr-sign" autocomplete="off">
                 <div class="form-row" style="align-items:flex-start">
                     <label class="form-label" style="padding-top:8px">CSR</label>
-                    <textarea class="form-control" name="csrContent" placeholder="粘贴 PKCS#10 CSR" required></textarea>
+                    <textarea class="form-control" name="csrContent" placeholder="粘贴 PKCS#10 CSR，或选择下方 CSR 文件自动填入" required></textarea>
+                </div>
+                <div class="form-row">
+                    <label class="form-label">CSR文件</label>
+                    <div style="flex:1">
+                        <input class="form-control" id="csr-sign-file" type="file" accept=".csr,.p10,.pem,.der,.req,.txt,application/pkcs10">
+                        <div id="csrSignFileStatus" style="font-size:12px;color:#666;margin-top:6px">支持 PEM 或 DER CSR 文件；读取后仍可手动编辑 CSR 内容。</div>
+                    </div>
                 </div>
                 <div class="form-row">
                     <label class="form-label">算　法</label>
@@ -838,6 +849,7 @@
             <div class="form-row">
                 <label class="form-label">Admin Token</label>
                 <input class="form-control" id="admin-token" type="password" placeholder="X-Admin-Token（环境变量 CERT_ADMIN_TOKEN）">
+                <input class="form-control" id="api-token" type="password" placeholder="X-API-Token（环境变量 CERT_API_TOKEN；管理 token 也可用于业务接口）" style="margin-top:8px">
             </div>
 
             <div class="ext-panel">
@@ -1127,12 +1139,23 @@
 
     /* ── Trigger download ──────────────────────────────── */
     function triggerDownload(url) {
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = '';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        fetch(url, { headers: authHeaders(false) })
+            .then(function (res) {
+                if (!res.ok) return res.text().then(function (text) { throw new Error(text || ('HTTP ' + res.status)); });
+                var filename = filenameFromDisposition(res.headers.get('Content-Disposition'), 'download.zip');
+                return res.blob().then(function (blob) { return { blob: blob, filename: filename }; });
+            })
+            .then(function (download) {
+                var objectUrl = URL.createObjectURL(download.blob);
+                var a = document.createElement('a');
+                a.href = objectUrl;
+                a.download = download.filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(objectUrl);
+            })
+            .catch(function (err) { toast('下载失败：' + err.message, 'error'); });
     }
 
     /* ── Collect form data as plain object ─────────────── */
@@ -1153,7 +1176,7 @@
         setLoading(btn, true);
         fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(true),
             body: JSON.stringify(payload)
         })
         .then(function (res) { return res.json(); })
@@ -1185,7 +1208,7 @@
         setLoading(btn, true);
         fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: authHeaders(true),
             body: JSON.stringify(payload)
         })
         .then(function (res) {
@@ -1219,7 +1242,7 @@
     /* ── POST FormData (file upload) ───────────────────── */
     function postFormData(url, formData, btn, onSuccess) {
         setLoading(btn, true);
-        fetch(url, { method: 'POST', body: formData })
+        fetch(url, { method: 'POST', headers: authHeaders(false), body: formData })
         .then(function (res) { return res.json(); })
         .then(function (result) {
             if (result.success) {
@@ -1404,7 +1427,7 @@
         var curve = f.curve || 'prime256v1';
 
         var payload = {
-            certValidMonth: f.certValidMonth ? parseInt(f.certValidMonth, 10) : null,
+            certValidMonth: typeof f.certValidMonth === 'number' && !isNaN(f.certValidMonth) ? f.certValidMonth : null,
             dn_c: f.dn_c, dn_st: f.dn_st, dn_l: f.dn_l,
             dn_o: f.dn_o, dn_ou: f.dn_ou, dn_cn: f.dn_cn, dn_email: f.dn_email,
             algorithm: algo,
@@ -1449,9 +1472,108 @@
     ════════════════════════════════════════════════════ */
     var csrSignAlgo = document.getElementById('csrsign-algo');
     var csrSignCurveRow = document.getElementById('csrsign-curve-row');
+    var csrSignForm = document.getElementById('form-csr-sign');
+    var csrSignInput = csrSignForm.querySelector('textarea[name=csrContent]');
+    var csrSignFile = document.getElementById('csr-sign-file');
+    var csrSignFileStatus = document.getElementById('csrSignFileStatus');
+    var csrPreviewState = { csrContent: null, detectedAlgorithm: null, curve: null };
+    var maxCsrFileSize = 1024 * 1024;
+
     csrSignAlgo.addEventListener('change', function () {
         csrSignCurveRow.style.display = csrSignAlgo.value === 'ECC' ? 'flex' : 'none';
     });
+
+    function clearCsrPreviewState() {
+        csrPreviewState = { csrContent: null, detectedAlgorithm: null, curve: null };
+        var box = document.getElementById('csrPreviewBox');
+        box.style.display = 'none';
+        box.textContent = '';
+    }
+
+    function saveCsrPreviewState(payload, result) {
+        csrPreviewState = {
+            csrContent: payload.csrContent,
+            detectedAlgorithm: result.data && result.data.detectedAlgorithm ? result.data.detectedAlgorithm : null,
+            curve: resolveCsrCurve(result.data && result.data.publicKeyParam)
+        };
+    }
+
+    function resolveCsrCurve(publicKeyParam) {
+        if (!publicKeyParam) return null;
+        if (publicKeyParam.indexOf('prime256v1') >= 0 ||
+            publicKeyParam.indexOf('secp256r1') >= 0 ||
+            publicKeyParam.indexOf('1.2.840.10045.3.1.7') >= 0) return 'prime256v1';
+        if (publicKeyParam.indexOf('brainpoolP256r1') >= 0 ||
+            publicKeyParam.indexOf('1.3.36.3.3.2.8.1.1.7') >= 0) return 'brainpoolP256r1';
+        if (publicKeyParam.indexOf('FRP256v1') >= 0 ||
+            publicKeyParam.indexOf('1.2.250.1.223.101.256.1') >= 0) return 'FRP256v1';
+        return null;
+    }
+
+    function looksLikeCsrPem(text) {
+        return text.indexOf('-----BEGIN CERTIFICATE REQUEST-----') >= 0 ||
+            text.indexOf('-----BEGIN NEW CERTIFICATE REQUEST-----') >= 0;
+    }
+
+    function arrayBufferToBase64(buffer) {
+        var bytes = new Uint8Array(buffer);
+        var binary = '';
+        var chunkSize = 0x8000;
+        for (var i = 0; i < bytes.length; i += chunkSize) {
+            var chunk = bytes.subarray(i, i + chunkSize);
+            binary += String.fromCharCode.apply(null, chunk);
+        }
+        return btoa(binary);
+    }
+
+    function requestJson(url, payload) {
+        return fetch(url, {
+            method: 'POST',
+            headers: authHeaders(true),
+            body: JSON.stringify(payload)
+        })
+        .then(function (res) { return res.json(); })
+        .then(function (result) {
+            if (!result.success) throw new Error(result.msg || '操作失败');
+            return result;
+        });
+    }
+
+    function resolveCsrSignAlgorithm(payload) {
+        if (payload.algorithm) return Promise.resolve(payload.algorithm);
+        if (csrPreviewState.csrContent === payload.csrContent && csrPreviewState.detectedAlgorithm) {
+            return Promise.resolve(csrPreviewState.detectedAlgorithm);
+        }
+        return requestJson('/api/v2/cert/csr/preview', payload).then(function (result) {
+            saveCsrPreviewState(payload, result);
+            if (!csrPreviewState.detectedAlgorithm) throw new Error('无法自动检测 CSR 算法');
+            return csrPreviewState.detectedAlgorithm;
+        });
+    }
+
+    function handleCsrFile(file) {
+        if (!file) return;
+        if (file.size > maxCsrFileSize) {
+            csrSignFile.value = '';
+            csrSignFileStatus.textContent = 'CSR 文件不能超过 1MB';
+            toast('CSR 文件不能超过 1MB', 'error');
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+            var buffer = reader.result;
+            var text = new TextDecoder('utf-8').decode(buffer);
+            var isPem = looksLikeCsrPem(text);
+            csrSignInput.value = isPem ? text.trim() : arrayBufferToBase64(buffer);
+            clearCsrPreviewState();
+            csrSignFileStatus.textContent = '已读取：' + file.name + '（' + (isPem ? 'PEM' : 'DER/base64') + '）';
+            toast('CSR 文件已读取，请预览或签发', 'success');
+        };
+        reader.onerror = function () {
+            toast('读取 CSR 文件失败', 'error');
+        };
+        reader.readAsArrayBuffer(file);
+    }
 
     function buildCsrSignPayload(form) {
         var f = formToObject(form);
@@ -1459,7 +1581,7 @@
             csrContent: f.csrContent,
             algorithm: f.algorithm || null,
             curve: f.curve || null,
-            certValidMonth: f.certValidMonth ? parseInt(f.certValidMonth, 10) : null,
+            certValidMonth: typeof f.certValidMonth === 'number' && !isNaN(f.certValidMonth) ? f.certValidMonth : null,
             keyUsages: collectChecked(form, 'csku_'),
             extendedKeyUsages: collectChecked(form, 'cseku_'),
             subjectAltNames: parseSans(f.sans),
@@ -1467,39 +1589,85 @@
         };
     }
 
-    document.getElementById('btn-csr-preview').addEventListener('click', function () {
-        var btn = this;
-        var form = document.getElementById('form-csr-sign');
-        var payload = buildCsrSignPayload(form);
-        if (!payload.csrContent) { toast('请输入 CSR', 'error'); return; }
-        postJson('/api/v2/cert/csr/preview', payload, btn, function (result) {
-            var box = document.getElementById('csrPreviewBox');
-            box.style.display = 'block';
-            box.textContent = JSON.stringify(result.data, null, 2);
-        });
+    csrSignFile.addEventListener('change', function () {
+        handleCsrFile(this.files && this.files[0]);
     });
 
-    document.getElementById('form-csr-sign').addEventListener('submit', function (e) {
+    csrSignInput.addEventListener('input', function () {
+        clearCsrPreviewState();
+    });
+
+    csrSignForm.addEventListener('change', function (event) {
+        if (event.target !== csrSignFile) clearCsrPreviewState();
+    });
+
+    document.getElementById('btn-csr-preview').addEventListener('click', function () {
+        var btn = this;
+        var payload = buildCsrSignPayload(csrSignForm);
+        if (!payload.csrContent) { toast('请输入 CSR', 'error'); return; }
+        setLoading(btn, true);
+        requestJson('/api/v2/cert/csr/preview', payload)
+            .then(function (result) {
+                saveCsrPreviewState(payload, result);
+                var box = document.getElementById('csrPreviewBox');
+                box.style.display = 'block';
+                box.textContent = JSON.stringify(result.data, null, 2);
+                toast('预览成功', 'success');
+            })
+            .catch(function (err) {
+                toast(err.message || '操作失败', 'error');
+            })
+            .finally(function () {
+                setLoading(btn, false);
+            });
+    });
+
+    csrSignForm.addEventListener('submit', function (e) {
         e.preventDefault();
         var btn = document.getElementById('btn-csr-sign');
         var payload = buildCsrSignPayload(this);
-        postJson('/api/v2/cert/csr/sign', payload, btn, function (result) {
-            var cn = result.data;
-            var algo = payload.algorithm || 'SM2';
-            var path = '/api/v2/cert/download/' + algo + '/' + encodeURIComponent(cn);
-            if (algo === 'ECC') path += '?curve=' + encodeURIComponent(payload.curve || 'prime256v1');
-            triggerDownload(path);
-        });
+        var explicitAlgorithm = !!payload.algorithm;
+        if (!payload.csrContent) { toast('请输入 CSR', 'error'); return; }
+        setLoading(btn, true);
+        resolveCsrSignAlgorithm(payload)
+            .then(function (algo) {
+                if (!explicitAlgorithm && algo === 'ECC' && csrPreviewState.curve) payload.curve = csrPreviewState.curve;
+                payload.algorithm = algo;
+                return requestJson('/api/v2/cert/csr/sign', payload).then(function (result) {
+                    var cn = result.data;
+                    var path = '/api/v2/cert/download/' + algo + '/' + encodeURIComponent(cn);
+                    if (algo === 'ECC') path += '?curve=' + encodeURIComponent(payload.curve || 'prime256v1');
+                    toast('签发成功，正在下载…', 'success');
+                    triggerDownload(path);
+                });
+            })
+            .catch(function (err) {
+                toast(err.message || '操作失败', 'error');
+            })
+            .finally(function () {
+                setLoading(btn, false);
+            });
     });
 
     /* ════════════════════════════════════════════════════
        Iteration 2/4/5 — Shared helpers
     ════════════════════════════════════════════════════ */
     var adminTokenInput = document.getElementById('admin-token');
+    var apiTokenInput = document.getElementById('api-token');
+
+    function authHeaders(withJson) {
+        var h = {};
+        if (withJson) h['Content-Type'] = 'application/json';
+        var adminTok = adminTokenInput && adminTokenInput.value ? adminTokenInput.value : '';
+        var apiTok = apiTokenInput && apiTokenInput.value ? apiTokenInput.value : '';
+        if (adminTok) h['X-Admin-Token'] = adminTok;
+        if (apiTok) h['X-API-Token'] = apiTok;
+        return h;
+    }
+
     function adminHeaders() {
-        var h = { 'Content-Type': 'application/json' };
-        var tok = adminTokenInput && adminTokenInput.value ? adminTokenInput.value : '';
-        if (tok) h['X-Admin-Token'] = tok;
+        var h = authHeaders(true);
+        delete h['X-API-Token'];
         return h;
     }
 
@@ -1521,6 +1689,13 @@
             .catch(function (err) { toast('请求失败：' + err.message, 'error'); })
             .finally(function () { setLoading(btn, false); });
     }
+
+    document.querySelectorAll('.ca-link').forEach(function (link) {
+        link.addEventListener('click', function (event) {
+            event.preventDefault();
+            triggerDownload(link.getAttribute('href'));
+        });
+    });
 
     /* ════════════════════════════════════════════════════
        Tab 10 — CA 管理 (T07-T11)
@@ -1613,7 +1788,7 @@
         if (!plain || !cert) { toast('明文与证书均不能为空', 'error'); return; }
         var b64 = (enc === 'base64') ? plain.trim() : toBase64Utf8(plain);
         fetchJson('/api/v2/envelope/encrypt', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: authHeaders(true),
             body: JSON.stringify({ plainBase64: b64, recipientCert: cert })
         }, btn, function (result) {
             showJson('env-result', '信封 base64:\n' + result.data);
@@ -1631,7 +1806,7 @@
         };
         if (!payload.envelopeBase64) { toast('信封 base64 不能为空', 'error'); return; }
         fetchJson('/api/v2/envelope/decrypt', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: authHeaders(true),
             body: JSON.stringify(payload)
         }, btn, function (result) {
             var plain;
@@ -1678,7 +1853,7 @@
         };
         if (!payload.privateKeyPem) { toast('请输入私钥 PEM', 'error'); return; }
         fetchJson('/api/v2/inspect/key', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: authHeaders(true),
             body: JSON.stringify(payload)
         }, btn, function (result) {
             showJson('key-inspect-result', result.data);
@@ -1709,7 +1884,7 @@
         var anchors = splitPemBlocks(document.getElementById('chain-anchors').value);
         if (!chain.length) { toast('证书链不能为空', 'error'); return; }
         fetchJson('/api/v2/inspect/chain', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: authHeaders(true),
             body: JSON.stringify({ chain: chain, trustAnchors: anchors.length ? anchors : null })
         }, btn, function (result) {
             showJson('chain-result', result.data);
@@ -1734,7 +1909,7 @@
         try { revoked = JSON.parse(raw); }
         catch (e) { toast('revoked 不是合法 JSON', 'error'); return; }
         fetchJson('/api/v2/crl/generate', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: authHeaders(true),
             body: JSON.stringify({ caId: caId, validDays: validDays, revoked: revoked })
         }, btn, function (result) {
             showJson('crl-result', 'CRL base64:\n' + result.data);
@@ -1779,7 +1954,7 @@
             inputEncoding: document.getElementById('tool-input-encoding').value
         };
         fetchJson('/api/v2/tools/' + type, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST', headers: authHeaders(true),
             body: JSON.stringify(payload)
         }, btn, function (result) { showJson('tool-result', result.data); });
     });

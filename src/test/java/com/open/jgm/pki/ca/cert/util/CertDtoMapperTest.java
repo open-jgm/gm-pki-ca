@@ -22,8 +22,8 @@ class CertDtoMapperTest {
         CertIssueRequest req = new CertIssueRequest();
         req.setDnCn("张三");
         req.setDnC("CN");
-        req.setDnSt("hunan");
-        req.setDnL("changsha");
+        req.setDnSt("DEMO");
+        req.setDnL("DEMO");
         req.setDnO("openCA");
         req.setDnOu("dev");
         req.setCertValidMonth(12);

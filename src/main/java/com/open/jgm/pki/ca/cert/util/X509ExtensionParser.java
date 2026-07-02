@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 open-gm-jca contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.open.jgm.pki.ca.cert.util;
 
 import cn.hutool.core.util.HexUtil;
@@ -14,6 +30,8 @@ import org.bouncycastle.asn1.x509.KeyPurposeId;
 import org.bouncycastle.asn1.x509.SubjectKeyIdentifier;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -105,14 +123,24 @@ public final class X509ExtensionParser {
 
     private static String formatGeneralName(GeneralName g) {
         return switch (g.getTagNo()) {
-            case GeneralName.dNSName                 -> "dns:"     + g.getName();
-            case GeneralName.iPAddress               -> "ip:"      + g.getName();
-            case GeneralName.rfc822Name              -> "email:"   + g.getName();
-            case GeneralName.uniformResourceIdentifier -> "uri:"   + g.getName();
-            case GeneralName.directoryName           -> "dirName:" + g.getName();
-            case GeneralName.otherName               -> "other:"   + g.getName();
-            default                                   -> "tag" + g.getTagNo() + ":" + g.getName();
+            case GeneralName.dNSName -> "dns:" + g.getName();
+            case GeneralName.iPAddress -> "ip:" + formatIpAddress(g);
+            case GeneralName.rfc822Name -> "email:" + g.getName();
+            case GeneralName.uniformResourceIdentifier -> "uri:" + g.getName();
+            case GeneralName.directoryName -> "dirName:" + g.getName();
+            case GeneralName.otherName -> "other:" + g.getName();
+            default -> "tag" + g.getTagNo() + ":" + g.getName();
         };
+    }
+
+    private static String formatIpAddress(GeneralName g) {
+        try {
+            byte[] octets = ASN1OctetString.getInstance(g.getName()).getOctets();
+            return InetAddress.getByAddress(octets).getHostAddress();
+        } catch (IllegalArgumentException | UnknownHostException e) {
+            log.warn("解析 SubjectAltName IP 地址失败", e);
+            return g.getName().toString();
+        }
     }
 
     private static String parseAki(X509Certificate x509) {

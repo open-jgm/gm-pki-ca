@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 open-gm-jca contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.open.jgm.pki.ca.cert.ca;
 
 import com.open.jgm.pki.ca.cert.config.CertConfig;
@@ -22,18 +38,26 @@ import java.nio.charset.StandardCharsets;
 @Slf4j
 public class AdminTokenInterceptor implements HandlerInterceptor {
 
-    private static final String HEADER = "X-Admin-Token";
+    private static final String ADMIN_HEADER = "X-Admin-Token";
+    private static final String API_HEADER = "X-API-Token";
     private static final String JSON_401 =
-            "{\"code\":\"401\",\"msg\":\"未授权: 缺失或错误的 X-Admin-Token\",\"data\":null,\"success\":false}";
+            "{\"code\":\"401\",\"msg\":\"未授权: 缺失或错误的访问 token\",\"data\":null,\"success\":false}";
 
     private final CertConfig certConfig;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
             throws Exception {
-        String expected = certConfig.getAdminToken();
-        String actual = request.getHeader(HEADER);
+        String uri = request.getRequestURI();
+        if (uri.startsWith("/api/v2/ca/")) {
+            return verifyAdminToken(request, response);
+        }
+        return verifyApiToken(request, response);
+    }
 
+    private boolean verifyAdminToken(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String expected = certConfig.getAdminToken();
+        String actual = request.getHeader(ADMIN_HEADER);
         if (expected == null || expected.isBlank()) {
             log.warn("admin-token 未配置，拒绝管理端调用: {}", request.getRequestURI());
             return reject(response);
@@ -43,6 +67,27 @@ public class AdminTokenInterceptor implements HandlerInterceptor {
             return reject(response);
         }
         return true;
+    }
+
+    private boolean verifyApiToken(HttpServletRequest request, HttpServletResponse response) throws Exception {
+        String expected = certConfig.getApiToken();
+        String apiToken = request.getHeader(API_HEADER);
+        String adminToken = request.getHeader(ADMIN_HEADER);
+        if (expected == null || expected.isBlank()) {
+            log.warn("api-token 未配置，拒绝业务端调用: {}", request.getRequestURI());
+            return reject(response);
+        }
+        if ((apiToken != null && constantTimeEquals(expected, apiToken))
+                || adminTokenMatches(adminToken)) {
+            return true;
+        }
+        log.warn("业务端 token 校验失败: uri={} ip={}", request.getRequestURI(), request.getRemoteAddr());
+        return reject(response);
+    }
+
+    private boolean adminTokenMatches(String actual) {
+        String expected = certConfig.getAdminToken();
+        return expected != null && !expected.isBlank() && actual != null && constantTimeEquals(expected, actual);
     }
 
     private static boolean reject(HttpServletResponse response) throws Exception {

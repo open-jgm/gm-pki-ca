@@ -14,8 +14,8 @@ spring:
 # 敏感值（如 CA 私钥）生产环境通过环境变量覆盖，例如：
 #   CERT_P12_PASSWORD=MyStr0ngPassword
 cert:
-  # P12 口令（生产环境务必通过环境变量 CERT_P12_PASSWORD 覆盖）
-  p12-password: ${CERT_P12_PASSWORD:12345678}
+  # P12 口令（生产环境务必通过环境变量 CERT_P12_PASSWORD 覆盖；默认空值会打印 WARN）
+  p12-password: ${CERT_P12_PASSWORD:}
   # 已签发证书 LRU 缓存条目上限
   cache-max-size: ${CERT_CACHE_MAX_SIZE:100}
   # 已签发证书 LRU 缓存 TTL（分钟）
@@ -26,9 +26,17 @@ cert:
   ca-storage-dir: ${CERT_CA_STORAGE_DIR:./data/ca}
   # T11: 管理端 token；空值时拒绝全部 /api/v2/ca/** 请求（默认安全）
   admin-token: ${CERT_ADMIN_TOKEN:}
+  # 业务接口 token；空值时拒绝 /api/v2/cert/**、/api/v2/envelope/**、/api/v2/crl/**（默认安全）
+  api-token: ${CERT_API_TOKEN:}
+  # 是否启用内置 DEMO CA；生产 profile 会关闭
+  demo-ca-enabled: ${CERT_DEMO_CA_ENABLED:true}
+  # CORS 白名单，逗号分隔；空值表示不开放跨域访问
+  cors-allowed-origins: ${CORS_ALLOWED_ORIGINS:}
+  # 若配置 * 作为 origin，本项会被强制视为 false
+  cors-allow-credentials: ${CORS_ALLOW_CREDENTIALS:false}
 
 logging:
   level:
     com.open.gm.jca: INFO
   file:
-    path: /opt/gm-pki-ca/logs
+    path: ${LOG_PATH:./logs}

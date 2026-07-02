@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 open-gm-jca contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.open.jgm.pki.ca.cert.crypto;
 
 import com.open.jgm.pki.ca.cert.dto.internal.CertCreateDTO;
@@ -6,9 +22,7 @@ import com.open.jgm.pki.ca.cert.util.CertExtensionResolver;
 import cn.hutool.core.codec.Base64;
 import com.open.jgm.pki.ca.framework.exception.BusinessException;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.IdUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.asn1.*;
@@ -68,7 +82,7 @@ public class SM2X509CertMaker {
         RootCA, SubCA, EndEntity
     } // class CertLevel
 
-    static Snowflake snowflake = IdUtil.createSnowflake(1L, 1L);
+    private static final SecureRandom SERIAL_RANDOM = new SecureRandom();
     static BouncyCastleProvider bcProvider = new BouncyCastleProvider();
 
     static {
@@ -76,7 +90,7 @@ public class SM2X509CertMaker {
     }
 
     public static final String SIGN_ALGO_SM3WITHSM2 = "SM3withSM2";
-    public static final String PASSWORD = "12345678";
+    public static final String PASSWORD = "";
     static final String rootPub = "3059301306072a8648ce3d020106082a811ccf5501822d0342000415c03209d3a389034d5a25848f1e39752e3f5e77cc2f7db64d4a99bc00aa18979ac7af96dd8be657a622ad9094fa67b73e89f006a2390d764a787b11ae38dd3b";
     static final String rootPri = "308193020100301306072a8648ce3d020106082a811ccf5501822d04793077020101042059112852fdbe9a0171d2219f3af40eca3ee5fe6e2826f41c85b1d71ad664a87fa00a06082a811ccf5501822da1440342000415c03209d3a389034d5a25848f1e39752e3f5e77cc2f7db64d4a99bc00aa18979ac7af96dd8be657a622ad9094fa67b73e89f006a2390d764a787b11ae38dd3b";
     public static final String issuerPublicKeyBase64 = "3059301306072a8648ce3d020106082a811ccf5501822d034200047da837b42bf17a4e1e9f0516bed5bf7398e9898dd6147c5191be1f989c9528187b3677b93cefe1a1ec6146f1e5f43dec94e4aea818f95061db2792adb12cbc09";
@@ -88,6 +102,13 @@ public class SM2X509CertMaker {
     public PublicKey rootPublicKey;
     public PrivateKey rootPrivateKey;
 
+    private static BigInteger randomSerialNumber() {
+        byte[] bytes = new byte[16];
+        SERIAL_RANDOM.nextBytes(bytes);
+        bytes[0] &= 0x7F;
+        return new BigInteger(1, bytes);
+    }
+
     public SM2X509CertMaker() {
         try {
             rootPublicKey = BCECUtil.convertX509ToECPublicKey(HexUtil.decodeHex(rootPub));
@@ -96,7 +117,7 @@ public class SM2X509CertMaker {
             issuerPublicKey = BCECUtil.convertX509ToECPublicKey(HexUtil.decodeHex(issuerPublicKeyBase64));
             issuerPrivateKey = BCECUtil.convertPKCS8ToECPrivateKey(HexUtil.decodeHex(issuerPrivateKeyBase64));
         } catch (Exception e) {
-            e.printStackTrace();
+            log.error("初始化内置 SM2 DEMO CA 密钥失败", e);
         }
     }
 
@@ -139,8 +160,7 @@ public class SM2X509CertMaker {
         X500Name subjectDN = SM2X509CertMaker.buildSubjectDN(dto);
         // KeyPair userKeyPair = SM2X509CertMaker.softSm2KeyPair();
         PublicKey rootPub = new SM2PublicKey(issuerPublicKey.getAlgorithm(), (BCECPublicKey) issuerPublicKey);
-        System.out.println("caPub=" + HexUtil.encodeHexStr(issuerPublicKey.getEncoded()));
-        System.out.println("caPri=" + HexUtil.encodeHexStr(issuerPrivateKey.getEncoded()));
+        log.debug("使用 SM2 issuer 公钥: {}", HexUtil.encodeHexStr(issuerPublicKey.getEncoded()));
 
         Date notBefore = DateUtil.beginOfDay(DateUtil.date());
         Date notAfter = DateUtil.offsetMonth(notBefore, dto.getCertValidMonth());
@@ -259,7 +279,7 @@ public class SM2X509CertMaker {
                     subjectDN = issuerDN;
                 }
         }
-        BigInteger serialNumber = BigInteger.valueOf(snowflake.nextId());
+        BigInteger serialNumber = randomSerialNumber();
         X509v3CertificateBuilder v3CertGen = new X509v3CertificateBuilder(issuerDN, serialNumber, notBefore, notAfter, subjectDN, subPub);
 
         JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();
@@ -358,7 +378,7 @@ public class SM2X509CertMaker {
                 }
         }
 
-        BigInteger serialNumber = BigInteger.valueOf(snowflake.nextId());
+        BigInteger serialNumber = randomSerialNumber();
         X509v3CertificateBuilder v3CertGen = new X509v3CertificateBuilder(issuerDN, serialNumber, notBefore, notAfter, subject, subPub);
 
         JcaX509ExtensionUtils extUtils = new JcaX509ExtensionUtils();

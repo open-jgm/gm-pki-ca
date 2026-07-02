@@ -36,8 +36,8 @@ public class GenerateCSRMainTest {
         X500Name subject = new X500NameBuilder(BCStyle.INSTANCE)
                 .addRDN(BCStyle.CN, "张三")
                 .addRDN(BCStyle.C,  "CN")
-                .addRDN(BCStyle.ST, "hunan")
-                .addRDN(BCStyle.L,  "changsha")
+                .addRDN(BCStyle.ST, "DEMO")
+                .addRDN(BCStyle.L,  "DEMO")
                 .addRDN(BCStyle.O,  "openCA")
                 .addRDN(BCStyle.OU, "dev")
                 .build();

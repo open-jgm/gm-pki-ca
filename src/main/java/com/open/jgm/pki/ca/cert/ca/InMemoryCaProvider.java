@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 open-gm-jca contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.open.jgm.pki.ca.cert.ca;
 
 import cn.hutool.core.codec.Base64;
@@ -69,7 +85,11 @@ public class InMemoryCaProvider implements CaProvider {
 
     @PostConstruct
     public void init() {
-        registerBuiltin();
+        if (certConfig.isDemoCaEnabled()) {
+            registerBuiltin();
+        } else {
+            log.warn("内置 DEMO CA 已禁用，请通过 /api/v2/ca/upload 上传自有 CA");
+        }
         loadPersisted();
         log.info("CaProvider initialized: {} CAs total (builtin + custom)", cas.size());
     }
@@ -175,6 +195,7 @@ public class InMemoryCaProvider implements CaProvider {
     // ──────────────────────────────────────────────────────────
 
     private void registerBuiltin() {
+        // Built-in DEMO CA material is public sample data only. Never use it as production trust anchors.
         // SM2
         try {
             byte[] subDer = Base64.decode(SM2X509CertMaker.subCACert);

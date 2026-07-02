@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 open-gm-jca contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.open.jgm.pki.ca.cert.crypto;
 
 import com.open.jgm.pki.ca.cert.dto.internal.CertCreateDTO;
@@ -5,9 +21,7 @@ import com.open.jgm.pki.ca.cert.dto.internal.CertDescInfo;
 import com.open.jgm.pki.ca.cert.util.CertExtensionResolver;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.IdUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
@@ -51,11 +65,11 @@ public class RSAx509CertMaker {
     // ----------------------------------------------------------------
     private enum CertLevel { RootCA, SubCA, EndEntity }
 
-    static final Snowflake snowflake = IdUtil.createSnowflake(1L, 2L);
+    private static final SecureRandom SERIAL_RANDOM = new SecureRandom();
     static final BouncyCastleProvider BC = new BouncyCastleProvider();
 
     public static final String SIGN_ALGO = "SHA256withRSA";
-    public static final String PASSWORD  = "12345678";
+    public static final String PASSWORD  = "";
 
     // ----------------------------------------------------------------
     // 硬编码根CA密钥对（X509/PKCS8 DER hex，离线生成后固定）
@@ -304,7 +318,7 @@ public class RSAx509CertMaker {
             throw new IllegalArgumentException("SubCA: subject must not equal issuer");
         }
 
-        BigInteger serial = BigInteger.valueOf(snowflake.nextId());
+        BigInteger serial = randomSerialNumber();
         X509v3CertificateBuilder builder =
                 new X509v3CertificateBuilder(issuerDN, serial, notBefore, notAfter, subjectDN, subPub);
 
@@ -347,7 +361,7 @@ public class RSAx509CertMaker {
             subjectAltNames.addAll(customSans);
         }
 
-        BigInteger serial = BigInteger.valueOf(snowflake.nextId());
+        BigInteger serial = randomSerialNumber();
         X509v3CertificateBuilder builder =
                 new X509v3CertificateBuilder(issuerDN, serial, notBefore, notAfter, subject, subPub);
 
@@ -375,6 +389,14 @@ public class RSAx509CertMaker {
         return builder.build(signer);
     }
 
+
+    private static BigInteger randomSerialNumber() {
+        byte[] bytes = new byte[16];
+        SERIAL_RANDOM.nextBytes(bytes);
+        bytes[0] &= 0x7F;
+        return new BigInteger(1, bytes);
+    }
+
     // ----------------------------------------------------------------
     // 默认 CA DTO（供静态初始化块使用）
     // ----------------------------------------------------------------
@@ -383,12 +405,12 @@ public class RSAx509CertMaker {
         CertCreateDTO dto = new CertCreateDTO();
         dto.setDn_cn(cn);
         dto.setDn_c("CN");
-        dto.setDn_st("hunan");
-        dto.setDn_l("changsha");
-        dto.setDn_street("lugu");
-        dto.setDn_email("crypto_lt@qq.com");
-        dto.setDn_o("qiming");
-        dto.setDn_ou("mima");
+        dto.setDn_st("DEMO");
+        dto.setDn_l("DEMO");
+        dto.setDn_street("DEMO");
+        dto.setDn_email("demo@example.com");
+        dto.setDn_o("OPEN-GM-JCA DEMO");
+        dto.setDn_ou("DEMO CA");
         dto.setCertValidMonth(240);
         dto.setP12Password(PASSWORD);
         return dto;

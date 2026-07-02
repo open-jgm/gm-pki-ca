@@ -144,10 +144,10 @@ class EnvelopeServiceTest {
         CertCreateDTO d = new CertCreateDTO();
         d.setDn_cn(cn);
         d.setDn_c("CN");
-        d.setDn_st("hunan");
-        d.setDn_l("changsha");
-        d.setDn_o("qiming");
-        d.setDn_ou("mima");
+        d.setDn_st("DEMO");
+        d.setDn_l("DEMO");
+        d.setDn_o("OPEN-GM-JCA DEMO");
+        d.setDn_ou("DEMO CA");
         d.setCertValidMonth(12);
         return d;
     }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2026 open-gm-jca contributors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.open.jgm.pki.ca.cert.crypto;
 
 import com.open.jgm.pki.ca.cert.dto.internal.CertCreateDTO;
@@ -5,9 +21,7 @@ import com.open.jgm.pki.ca.cert.dto.internal.CertDescInfo;
 import com.open.jgm.pki.ca.cert.util.CertExtensionResolver;
 import cn.hutool.core.codec.Base64;
 import cn.hutool.core.date.DateUtil;
-import cn.hutool.core.lang.Snowflake;
 import cn.hutool.core.util.HexUtil;
-import cn.hutool.core.util.IdUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -112,9 +126,9 @@ public class ECCx509CertMaker {
     // ----------------------------------------------------------------
     private enum CertLevel { RootCA, SubCA, EndEntity }
 
-    static final Snowflake snowflake = IdUtil.createSnowflake(1L, 3L);
+    private static final SecureRandom SERIAL_RANDOM = new SecureRandom();
     static final BouncyCastleProvider BC = new BouncyCastleProvider();
-    public static final String PASSWORD = "12345678";
+    public static final String PASSWORD = "";
 
     // ----------------------------------------------------------------
     // prime256v1 (secp256r1 / P-256) 硬编码 CA 密钥对
@@ -413,7 +427,7 @@ public class ECCx509CertMaker {
             throw new IllegalArgumentException("SubCA: subject must not equal issuer");
         }
 
-        BigInteger serial = BigInteger.valueOf(snowflake.nextId());
+        BigInteger serial = randomSerialNumber();
         X509v3CertificateBuilder builder =
                 new X509v3CertificateBuilder(issuerDN, serial, notBefore, notAfter, subjectDN, subPub);
 
@@ -455,7 +469,7 @@ public class ECCx509CertMaker {
             subjectAltNames.addAll(customSans);
         }
 
-        BigInteger serial = BigInteger.valueOf(snowflake.nextId());
+        BigInteger serial = randomSerialNumber();
         X509v3CertificateBuilder builder =
                 new X509v3CertificateBuilder(issuerDN, serial, notBefore, notAfter, subject, subPub);
 
@@ -484,6 +498,14 @@ public class ECCx509CertMaker {
         return builder.build(signer);
     }
 
+
+    private static BigInteger randomSerialNumber() {
+        byte[] bytes = new byte[16];
+        SERIAL_RANDOM.nextBytes(bytes);
+        bytes[0] &= 0x7F;
+        return new BigInteger(1, bytes);
+    }
+
     // ----------------------------------------------------------------
     // 默认 CA DTO
     // ----------------------------------------------------------------
@@ -492,12 +514,12 @@ public class ECCx509CertMaker {
         CertCreateDTO dto = new CertCreateDTO();
         dto.setDn_cn(cn);
         dto.setDn_c("CN");
-        dto.setDn_st("hunan");
-        dto.setDn_l("changsha");
-        dto.setDn_street("lugu");
-        dto.setDn_email("crypto_lt@qq.com");
-        dto.setDn_o("qiming");
-        dto.setDn_ou("mima");
+        dto.setDn_st("DEMO");
+        dto.setDn_l("DEMO");
+        dto.setDn_street("DEMO");
+        dto.setDn_email("demo@example.com");
+        dto.setDn_o("OPEN-GM-JCA DEMO");
+        dto.setDn_ou("DEMO CA");
         dto.setCertValidMonth(240);
         dto.setP12Password(PASSWORD);
         return dto;
@@ -526,9 +548,9 @@ public class ECCx509CertMaker {
             // 根CA自签证书
             CertCreateDTO rootDto = new CertCreateDTO();
             rootDto.setDn_cn("ECC " + ct.name() + " ROOT CA");
-            rootDto.setDn_c("CN"); rootDto.setDn_st("hunan"); rootDto.setDn_l("changsha");
-            rootDto.setDn_street("lugu"); rootDto.setDn_email("crypto_lt@qq.com");
-            rootDto.setDn_o("qiming"); rootDto.setDn_ou("mima"); rootDto.setCertValidMonth(240);
+            rootDto.setDn_c("CN"); rootDto.setDn_st("DEMO"); rootDto.setDn_l("DEMO");
+            rootDto.setDn_street("DEMO"); rootDto.setDn_email("demo@example.com");
+            rootDto.setDn_o("OPEN-GM-JCA DEMO"); rootDto.setDn_ou("DEMO CA"); rootDto.setCertValidMonth(240);
             rootDto.setP12Password(PASSWORD);
 
             X500Name rootDN = SM2X509CertMaker.buildSubjectDN(rootDto);
@@ -547,9 +569,9 @@ public class ECCx509CertMaker {
             // 子CA证书（根CA私钥签）
             CertCreateDTO subDto = new CertCreateDTO();
             subDto.setDn_cn("ECC " + ct.name() + " SUB CA");
-            subDto.setDn_c("CN"); subDto.setDn_st("hunan"); subDto.setDn_l("changsha");
-            subDto.setDn_street("lugu"); subDto.setDn_email("crypto_lt@qq.com");
-            subDto.setDn_o("qiming"); subDto.setDn_ou("mima"); subDto.setCertValidMonth(240);
+            subDto.setDn_c("CN"); subDto.setDn_st("DEMO"); subDto.setDn_l("DEMO");
+            subDto.setDn_street("DEMO"); subDto.setDn_email("demo@example.com");
+            subDto.setDn_o("OPEN-GM-JCA DEMO"); subDto.setDn_ou("DEMO CA"); subDto.setCertValidMonth(240);
             subDto.setP12Password(PASSWORD);
 
             X509Certificate subCert = buildSubCACert(ct, subDto, rootDN,

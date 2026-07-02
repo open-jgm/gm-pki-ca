@@ -19,8 +19,8 @@ class CsrGenerateServiceTest {
         CsrGenerateRequest req = new CsrGenerateRequest();
         req.setDnCn("张三");
         req.setDnC("CN");
-        req.setDnSt("hunan");
-        req.setDnL("changsha");
+        req.setDnSt("DEMO");
+        req.setDnL("DEMO");
         req.setDnStreet("road 1");
         req.setDnO("openCA");
         req.setDnOu("dev");
@@ -49,7 +49,7 @@ class CsrGenerateServiceTest {
 
         assertThat(parsed.getDetectedAlgorithm()).isEqualTo("SM2");
         assertThat(parsed.getCommonName()).isEqualTo("张三");
-        assertThat(parsed.getSubjectDn()).contains("C=CN", "ST=hunan", "L=changsha", "O=openCA", "OU=dev", "CN=张三");
+        assertThat(parsed.getSubjectDn()).contains("C=CN", "ST=DEMO", "L=DEMO", "O=openCA", "OU=dev", "CN=张三");
     }
 
     @Test
